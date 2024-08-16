@@ -1,0 +1,47 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.8'
+	id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'TaskManagementSystem'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.postgresql:postgresql:42.7.3'
+	implementation 'org.hibernate:hibernate-core:6.4.4.Final'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-autoconfigure:3.2.4'
+	implementation 'org.springframework.security:spring-security-crypto:6.2.4'
+	implementation 'org.springframework.boot:spring-boot-starter-validation:3.3.0'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.security:spring-security-config:6.0.8'
+	implementation 'org.springframework.security:spring-security-web:6.0.8'
+	implementation 'org.springframework.security:spring-security-core:6.0.8'
+
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+	implementation 'org.hibernate:hibernate-validator:8.0.1.Final'
+
+	implementation 'org.flywaydb:flyway-core:10.15.2'
+	runtimeOnly 'org.flywaydb:flyway-database-postgresql:10.15.2'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

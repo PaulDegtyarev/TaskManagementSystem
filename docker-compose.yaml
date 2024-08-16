@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  database:
+    image: postgres:latest
+    container_name: taskManagementSystem
+    ports:
+      - "5432:5432"
+    volumes:
+      - var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=taskManagementSystem
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
