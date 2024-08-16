@@ -68,6 +68,10 @@ public class AccountEntity {
         return roleId;
     }
 
+    public void setRoleEntity(RoleEntity roleEntity) {
+        this.roleEntity = roleEntity;
+    }
+
     public RoleEntity getRoleEntity() {
         return roleEntity;
     }

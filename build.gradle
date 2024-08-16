@@ -30,7 +30,6 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-config:6.0.8'
 	implementation 'org.springframework.security:spring-security-web:6.0.8'
 	implementation 'org.springframework.security:spring-security-core:6.0.8'
-
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
 	implementation 'org.hibernate:hibernate-validator:8.0.1.Final'
