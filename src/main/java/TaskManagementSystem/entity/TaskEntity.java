@@ -1,5 +1,6 @@
 package TaskManagementSystem.entity;
 
+import TaskManagementSystem.dto.dbo.TaskDBO;
 import jakarta.persistence.*;
 
 @Entity
@@ -106,5 +107,27 @@ public class TaskEntity {
 
     public PriorityEntity getPriorityEntity() {
         return priorityEntity;
+    }
+
+    public void setEntities(AccountEntity authorEntity,
+                            AccountEntity executorEntity,
+                            StatusEntity statusEntity,
+                            PriorityEntity priorityEntity) {
+        this.authorEntity = authorEntity;
+        this.executorEntity = executorEntity;
+        this.statusEntity = statusEntity;
+        this.priorityEntity = priorityEntity;
+    }
+
+    public void updateTaskEntity(TaskDBO dto, AccountEntity authorEntity, AccountEntity executorEntity, PriorityEntity priorityEntity) {
+        this.title = dto.getTitle();
+        this.description = dto.getDescription();
+        this.priorityId = priorityEntity.getPriorityId();
+        this.authorId = authorEntity.getAccountId();
+        this.executorId = executorEntity.getAccountId();
+        this.comment = dto.getComment();
+        this.priorityEntity = priorityEntity;
+        this.authorEntity = authorEntity;
+        this.executorEntity = executorEntity;
     }
 }

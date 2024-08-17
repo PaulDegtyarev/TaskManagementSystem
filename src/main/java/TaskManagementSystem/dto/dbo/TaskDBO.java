@@ -4,14 +4,14 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public class DBOToCreateTask {
+public class TaskDBO {
     @NotBlank
     private String title;
 
     @NotBlank
+
     private String description;
 
-    @NotBlank
     private String status;
 
     @NotBlank
@@ -25,13 +25,16 @@ public class DBOToCreateTask {
     @Min(1)
     private Integer executorId;
 
-    public DBOToCreateTask(String title, String description, String status, String priority, Integer authorId, Integer executorId) {
+    @NotBlank
+    private String comment;
+
+    public TaskDBO(String title, String description, String priority, Integer authorId, Integer executorId, String comment) {
         this.title = title;
         this.description = description;
-        this.status = status;
         this.priority = priority;
         this.authorId = authorId;
         this.executorId = executorId;
+        this.comment = comment;
     }
 
     public @NotBlank String getTitle() {
@@ -42,7 +45,11 @@ public class DBOToCreateTask {
         return description;
     }
 
-    public @NotBlank String getStatus() {
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatus() {
         return status;
     }
 
@@ -56,5 +63,9 @@ public class DBOToCreateTask {
 
     public @NotNull @Min(1) Integer getExecutorId() {
         return executorId;
+    }
+
+    public @NotBlank String getComment() {
+        return comment;
     }
 }
