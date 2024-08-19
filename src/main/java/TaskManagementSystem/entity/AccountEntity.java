@@ -48,6 +48,10 @@ public class AccountEntity {
         this.roleId = roleId;
     }
 
+    public void setAccountId(Integer accountId) {
+        this.accountId = accountId;
+    }
+
     public Integer getAccountId() {
         return accountId;
     }

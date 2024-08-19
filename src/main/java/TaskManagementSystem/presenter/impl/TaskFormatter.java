@@ -7,6 +7,8 @@ import TaskManagementSystem.exception.task.TaskNotFoundException;
 import TaskManagementSystem.presenter.TaskPresenter;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class TaskFormatter implements TaskPresenter {
     @Override
@@ -20,4 +22,7 @@ public class TaskFormatter implements TaskPresenter {
 
     @Override
     public GeneralTaskDSResponseModel prepareSuccessView(GeneralTaskDSResponseModel response) {return response;}
+
+    @Override
+    public List<GeneralTaskDSResponseModel> prepareSuccessView(List<GeneralTaskDSResponseModel> response) {return response;}
 }

@@ -28,6 +28,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -201,6 +203,43 @@ public class TaskControllerTest {
     @WithMockUser(roles = "EXECUTOR")
     void updateTaskByIdShouldReturnForbiddenExceptionForExecutor() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}", taskId))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("Успешный тест обновления задачи по id")
+    @WithMockUser(roles = "AUTHOR")
+    void getMyAllTasksSuccess() throws Exception {
+        List<GeneralTaskDSResponseModel> expectedResponse = List.of(
+                new GeneralTaskDSResponseModel(),
+                new GeneralTaskDSResponseModel(),
+                new GeneralTaskDSResponseModel()
+        );
+
+        when(taskService.getAllTasksFromAuthor()).thenReturn(expectedResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/task/me"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 401-ым статусом для неавторизованного аккаунта")
+    @WithAnonymousUser
+    void getMyAllTasksShouldReturnUnAuthorizeException() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/task/me"))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 403-им статусом для пользователя с ролью ROLE_EXECUTOR")
+    @WithMockUser(roles = "EXECUTOR")
+    void getMyAllTasksForbiddenExceptionForExecutor() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/task/me"))
                 .andDo(print())
                 .andExpect(status().isForbidden())
                 .andReturn();

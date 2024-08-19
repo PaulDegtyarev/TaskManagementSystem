@@ -44,6 +44,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/task").hasRole("AUTHOR")
                 .requestMatchers(HttpMethod.PUT, "/task/{taskId}").hasRole("AUTHOR")
+                .requestMatchers(HttpMethod.GET, "/task/me", "/task/me/{taskId}").hasRole("AUTHOR")
                 .requestMatchers("/task/**").authenticated()
                 .anyRequest()
                 .permitAll()

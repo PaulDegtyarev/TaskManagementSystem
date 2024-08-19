@@ -15,6 +15,8 @@ import TaskManagementSystem.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class TaskDSImpl implements TaskDS {
     private AccountRepository accountRepository;
@@ -87,5 +89,24 @@ public class TaskDSImpl implements TaskDS {
         taskRepository.save(foundTask);
 
         return dsResponseFactory.createGeneralResponse(foundTask);
+    }
+
+    @Override
+    public List<GeneralTaskDSResponseModel> getAllTasksByAuthorId(Integer authorId) {
+        return accountRepository
+                .findById(authorId)
+                .get()
+                .getTaskEntitiesByAuthor()
+                .stream()
+                .map(taskEntity -> dsResponseFactory.createGeneralResponse(taskEntity))
+                .toList();
+    }
+
+    @Override
+    public GeneralTaskDSResponseModel getTaskByTaskId(Integer taskId) {
+        return taskRepository
+                .findById(taskId)
+                .map(dsResponseFactory::createGeneralResponse)
+                .get();
     }
 }

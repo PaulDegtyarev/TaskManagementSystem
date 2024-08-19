@@ -93,6 +93,10 @@ public class TaskEntity {
         return comment;
     }
 
+    public void setAuthorEntity(AccountEntity authorEntity) {
+        this.authorEntity = authorEntity;
+    }
+
     public AccountEntity getAuthorEntity() {
         return authorEntity;
     }

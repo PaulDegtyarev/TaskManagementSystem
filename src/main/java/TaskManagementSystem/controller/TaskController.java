@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/task")
 public class TaskController {
@@ -45,5 +47,19 @@ public class TaskController {
             BindingResult bindingResult
     ) {
         return new ResponseEntity<>(taskService.updateTaskById(taskId, dto, bindingResult), HttpStatus.OK);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('ROLE_AUTHOR')")
+    @Async
+    public ResponseEntity<List<GeneralTaskDSResponseModel>> getMyAllTasks() {
+        return new ResponseEntity<>(taskService.getAllTasksFromAuthor(), HttpStatus.OK);
+    }
+
+    @GetMapping(value = {"/me/", "/me/{taskId}"})
+    @PreAuthorize("hasRole('ROLE_AUTHOR')")
+    @Async
+    public ResponseEntity<GeneralTaskDSResponseModel> getMyTaskByTaskId(@PathVariable @NotNull @Min(1) Integer taskId) {
+        return new ResponseEntity<>(taskService.getTaskByTaskId(taskId), HttpStatus.OK);
     }
 }

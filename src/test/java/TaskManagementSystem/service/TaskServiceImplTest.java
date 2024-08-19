@@ -1,5 +1,6 @@
 package TaskManagementSystem.service;
 
+import TaskManagementSystem.config.MyUserDetails;
 import TaskManagementSystem.dataStore.impl.TaskDSImpl;
 import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
 import TaskManagementSystem.dto.dbo.TaskDBO;
@@ -26,8 +27,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -58,7 +63,13 @@ public class TaskServiceImplTest {
     private GeneralTaskDSResponseModel expectedResponse;
     private AccountEntity authorEntity;
     private AccountEntity executorEntity;
+    private TaskEntity taskEntity;
     private Integer taskId;
+    private Integer authorId;
+    private SecurityContext securityContext;
+    private Authentication authentication;
+    private MyUserDetails myUserDetails;
+    private Integer accountId;
 
 
     @InjectMocks
@@ -77,6 +88,8 @@ public class TaskServiceImplTest {
                 "Перед сдачей задачи напишите мне или позвоните"
         );
 
+        authorId = 3;
+
         authorEntity = new AccountEntity(
                 "authorEmail@author.ru",
                 "author",
@@ -85,6 +98,7 @@ public class TaskServiceImplTest {
                 1
         );
         authorEntity.setRoleEntity(new RoleEntity(RoleUtil.AUTHOR_En));
+        authorEntity.setAccountId(authorId);
 
         executorEntity = new AccountEntity(
                 "executor@executor.ru",
@@ -94,6 +108,8 @@ public class TaskServiceImplTest {
                 2
         );
         executorEntity.setRoleEntity(new RoleEntity(RoleUtil.EXECUTOR_En));
+
+        taskId = 2;
 
         expectedResponse = new GeneralTaskDSResponseModel(
                 2,
@@ -106,7 +122,24 @@ public class TaskServiceImplTest {
                 dto.getComment()
         );
 
-        taskId = 2;
+        taskEntity = new TaskEntity(
+                dto.getTitle(),
+                dto.getDescription(),
+                1,
+                3,
+                authorId,
+                2,
+                dto.getComment()
+        );
+        taskEntity.setAuthorEntity(authorEntity);
+
+
+        securityContext = mock(SecurityContext.class);
+        SecurityContextHolder.setContext(securityContext);
+
+        authentication = mock(Authentication.class);
+        myUserDetails = mock(MyUserDetails.class);
+        accountId = 1;
     }
 
     @Test
@@ -222,12 +255,19 @@ public class TaskServiceImplTest {
     @Test
     @DisplayName("Успешный тест обновления задачи по taskId")
     void updateTaskByIdSuccess() {
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(new TaskEntity()));
+        accountId = dto.getAuthorId();
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
         when(bindingResult.hasErrors()).thenReturn(false);
         when(accountRepository.findById(dto.getAuthorId())).thenReturn(Optional.of(authorEntity));
+
         when(accountRepository.findById(dto.getExecutorId())).thenReturn(Optional.of(executorEntity));
         when(priorityRepository.findByPriority(dto.getPriority().toLowerCase())).thenReturn(Optional.of(new PriorityEntity()));
         when(taskDS.updateTaskById(taskId, dto)).thenReturn(expectedResponse);
+
         when(taskService.updateTaskById(taskId, dto, bindingResult)).thenReturn(expectedResponse);
 
         GeneralTaskDSResponseModel actualResponse = taskService.updateTaskById(taskId, dto, bindingResult);
@@ -239,6 +279,9 @@ public class TaskServiceImplTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 404-ым статусом, если задача не существует")
     void updateTaskByIdShouldReturnNotFoundExceptionForNonExistenceTask() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
         when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
         when(taskPresenter.prepareNotFoundView("Задача не найдена")).thenReturn(new TaskNotFoundException("Задача не найдена"));
 
@@ -254,6 +297,9 @@ public class TaskServiceImplTest {
     @DisplayName("Тест выбрасывающий исключение с 400-ым статусом, если в данных есть ошибка")
     void updateTaskByIdShouldReturnBadRequestException() {
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(new TaskEntity()));
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
         when(bindingResult.hasErrors()).thenReturn(true);
         when(taskPresenter.prepareBadRequestView("Неверные входные данные")).thenThrow(new TaskBadRequestException("Неверные входные данные"));
 
@@ -271,6 +317,9 @@ public class TaskServiceImplTest {
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(new TaskEntity()));
         when(bindingResult.hasErrors()).thenReturn(false);
         when(accountRepository.findById(dto.getAuthorId())).thenReturn(Optional.empty());
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
         when(taskPresenter.prepareNotFoundView("Автор не найден")).thenThrow(new TaskNotFoundException("Автор не найден"));
 
         Assertions.assertThrows(
@@ -282,12 +331,19 @@ public class TaskServiceImplTest {
     }
 
     @Test
-    @DisplayName("Тест выбрасывающий исключение с 403-им статусом, если роль автора не ROLE_AUTHOR ")
+    @DisplayName("Тест выбрасывающий исключение с 403-им статусом, если роль автора не ROLE_AUTHOR")
     void updateTaskByIdShouldReturnForbiddenExceptionForAuthorWithWrongRole() {
         authorEntity.setRoleEntity(new RoleEntity(RoleUtil.EXECUTOR_En));
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(new TaskEntity()));
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
         when(bindingResult.hasErrors()).thenReturn(false);
+
         when(accountRepository.findById(dto.getAuthorId())).thenReturn(Optional.of(authorEntity));
+
         when(taskPresenter.prepareForbiddenView("Исполнитель не может быть автором")).thenThrow(new TaskForbiddenException("Исполнитель не может быть автором"));
 
         Assertions.assertThrows(
@@ -299,13 +355,47 @@ public class TaskServiceImplTest {
     }
 
     @Test
+    @DisplayName("Тест выбрасывающий исключение с 400-ым статусом, если пользователь обновляет не свою задачу")
+    void updateTaskByTaskIdShouldReturnBadRequestException() {
+        accountId = 1;
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
+        when(bindingResult.hasErrors()).thenReturn(false);
+
+        when(accountRepository.findById(dto.getAuthorId())).thenReturn(Optional.of(authorEntity));
+
+        System.out.println(!taskEntity
+                .getAuthorEntity()
+                .getAccountId()
+                .equals(accountId));
+
+        when(taskPresenter.prepareForbiddenView(anyString())).thenThrow(new TaskForbiddenException("Вы не можете обновить чужую задач"));
+
+        Assertions.assertThrows(
+                TaskForbiddenException.class,
+                ()-> taskService.updateTaskById(taskId, dto, bindingResult));
+
+        verify(taskPresenter).prepareForbiddenView("Вы не можете обновить чужую задачу");
+    }
+
+    @Test
     @DisplayName("Тест выбрасывающий исключение с 404-ым статусом, если исполнитель не существует")
     void updateTaskByIdShouldReturnNotFoundExceptionForNonExistenceExecutor() {
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(new TaskEntity()));
+        accountId = dto.getAuthorId();
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
         when(bindingResult.hasErrors()).thenReturn(false);
+
         when(accountRepository.findById(dto.getAuthorId())).thenReturn(Optional.of(authorEntity));
         when(accountRepository.findById(dto.getExecutorId())).thenReturn(Optional.empty());
-        when(taskPresenter.prepareNotFoundView("Исполнитель не найден")).thenThrow(new TaskNotFoundException("Исполнитель не найден"));
+
+        when(taskPresenter.prepareNotFoundView("Исполнитель не найден")).thenReturn(new TaskNotFoundException("Исполнитель не найден"));
 
         Assertions.assertThrows(
                 TaskNotFoundException.class,
@@ -316,15 +406,19 @@ public class TaskServiceImplTest {
     }
 
     @Test
-    @DisplayName("Тест выбрасывающий исключение с 403-им статусом, если роль исполнителя не ROLE_EXECUTOR ")
+    @DisplayName("Тест выбрасывающий исключение с 403-им статусом, если роль исполнителя не ROLE_EXECUTOR")
     void updateTaskByIdShouldReturnForbiddenExceptionForExecutorWithWrongRole() {
+        accountId = dto.getAuthorId();
         executorEntity.setRoleEntity(new RoleEntity(RoleUtil.AUTHOR_En));
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(new TaskEntity()));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
         when(bindingResult.hasErrors()).thenReturn(false);
         when(accountRepository.findById(dto.getAuthorId())).thenReturn(Optional.of(authorEntity));
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
         when(accountRepository.findById(dto.getExecutorId())).thenReturn(Optional.of(executorEntity));
 
-        when(taskPresenter.prepareForbiddenView("Автор не может быть исполнителем")).thenThrow(new TaskForbiddenException("Автор не может быть исполнителем"));
+        when(taskPresenter.prepareForbiddenView(anyString())).thenThrow(new TaskForbiddenException("Автор не может быть исполнителем"));
 
         Assertions.assertThrows(
                 TaskForbiddenException.class,
@@ -337,9 +431,13 @@ public class TaskServiceImplTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 404-ым статусом, если приоритет не существует")
     void updateTaskByIdShouldReturnNotFoundExceptionForNonExistencePriority() {
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(new TaskEntity()));
+        accountId = dto.getAuthorId();
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
         when(bindingResult.hasErrors()).thenReturn(false);
         when(accountRepository.findById(dto.getAuthorId())).thenReturn(Optional.of(authorEntity));
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
         when(accountRepository.findById(dto.getExecutorId())).thenReturn(Optional.of(executorEntity));
         when(priorityRepository.findByPriority(dto.getPriority().toLowerCase())).thenReturn(Optional.empty());
 
@@ -351,5 +449,26 @@ public class TaskServiceImplTest {
         );
 
         verify(taskPresenter).prepareNotFoundView("Приоритет не найден");
+    }
+
+    @Test
+    @DisplayName("Успешный тест просмотра всех своих задач")
+    void getAllTasksFromAuthorSuccess() {
+        List<GeneralTaskDSResponseModel> expectedResponse = List.of(
+                new GeneralTaskDSResponseModel(),
+                new GeneralTaskDSResponseModel(),
+                new GeneralTaskDSResponseModel()
+        );
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
+        when(taskDS.getAllTasksByAuthorId(accountId)).thenReturn(expectedResponse);
+        when(taskPresenter.prepareSuccessView(expectedResponse)).thenReturn(expectedResponse);
+
+        List<GeneralTaskDSResponseModel> actualResponse = taskService.getAllTasksFromAuthor();
+
+        Assertions.assertEquals(expectedResponse, actualResponse);
+        verify(taskPresenter).prepareSuccessView(expectedResponse);
     }
 }
