@@ -1,7 +1,8 @@
 package TaskManagementSystem.controller;
 
 import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
-import TaskManagementSystem.dto.dbo.TaskDBO;
+import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
+import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.service.TaskService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -32,18 +33,18 @@ public class TaskController {
     @Async
     @Transactional
     public ResponseEntity<GeneralTaskDSResponseModel> createTask(
-            @RequestBody @Valid TaskDBO dto,
+            @RequestBody @Valid GeneralTaskDBO dto,
             BindingResult bindingResult
             ) {
         return new ResponseEntity<>(taskService.createTask(dto, bindingResult), HttpStatus.CREATED);
     }
 
-    @PutMapping(value = {"", "/{taskId}"})
+    @PutMapping(value = {"/", "/{taskId}"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     public ResponseEntity<GeneralTaskDSResponseModel> updateTaskByTaskId(
-            @PathVariable @NotNull @Min(1) Integer taskId,
-            @RequestBody @Valid TaskDBO dto,
+            @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
+            @RequestBody @Valid TaskDBOToUpdateTaskByTaskId dto,
             BindingResult bindingResult
     ) {
         return new ResponseEntity<>(taskService.updateTaskById(taskId, dto, bindingResult), HttpStatus.OK);
@@ -59,7 +60,14 @@ public class TaskController {
     @GetMapping(value = {"/me/", "/me/{taskId}"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
-    public ResponseEntity<GeneralTaskDSResponseModel> getMyTaskByTaskId(@PathVariable @NotNull @Min(1) Integer taskId) {
+    public ResponseEntity<GeneralTaskDSResponseModel> getMyTaskByTaskId(@PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId) {
         return new ResponseEntity<>(taskService.getTaskByTaskId(taskId), HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = {"/me/", "/me/{taskId}"})
+    @PreAuthorize("hasRole('ROLE_AUTHOR')")
+    @Async
+    public void deleteMyTaskByTaskId(@PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId) {
+        taskService.deleteTaskByTaskId(taskId);
     }
 }

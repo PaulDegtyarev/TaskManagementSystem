@@ -2,8 +2,10 @@ package TaskManagementSystem.service.impl;
 
 import TaskManagementSystem.config.MyUserDetails;
 import TaskManagementSystem.dataStore.TaskDS;
+import TaskManagementSystem.dto.dSRequest.TaskDSRequestModel;
 import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
-import TaskManagementSystem.dto.dbo.TaskDBO;
+import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
+import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.entity.AccountEntity;
 import TaskManagementSystem.entity.TaskEntity;
 import TaskManagementSystem.exception.task.TaskBadRequestException;
@@ -46,12 +48,24 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public GeneralTaskDSResponseModel createTask(TaskDBO dto, BindingResult bindingResult) {
+    public GeneralTaskDSResponseModel createTask(GeneralTaskDBO dto, BindingResult bindingResult) {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
+        Integer accountId = myUserDetails.getId();
+
         if (bindingResult.hasErrors()) throw taskPresenter.prepareBadRequestView("Неверные входные данные");
 
         Optional<AccountEntity> authorEntity = accountRepository.findById(dto.getAuthorId());
 
         if (authorEntity.isEmpty()) throw taskPresenter.prepareNotFoundView("Автор не найден");
+
+        if (!authorEntity
+                .get()
+                .getAccountId()
+                .equals(accountId)) throw taskPresenter.prepareBadRequestView("id автора не совпадает с Вашим");
 
         if (!authorEntity
                 .get()
@@ -74,15 +88,23 @@ public class TaskServiceImpl implements TaskService {
                 .findByPriority(dto.getPriority().toLowerCase())
                 .isEmpty()) throw taskPresenter.prepareNotFoundView("Приоритет не найден");
 
-        dto.setStatus(StatusUtil.WAITING);
+        TaskDSRequestModel dsRequest = new TaskDSRequestModel(
+                dto.getTitle(),
+                dto.getDescription(),
+                dto.getPriority(),
+                dto.getAuthorId(),
+                dto.getExecutorId(),
+                dto.getComment(),
+                StatusUtil.WAITING
+        );
 
-        GeneralTaskDSResponseModel createdTask = taskDS.createTask(dto);
+        GeneralTaskDSResponseModel createdTask = taskDS.createTask(dsRequest);
 
         return taskPresenter.prepareSuccessView(createdTask);
     }
 
     @Override
-    public GeneralTaskDSResponseModel updateTaskById(Integer taskId, TaskDBO dto, BindingResult bindingResult) {
+    public GeneralTaskDSResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto, BindingResult bindingResult) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -128,6 +150,10 @@ public class TaskServiceImpl implements TaskService {
                     .findByPriority(dto.getPriority().toLowerCase())
                     .isEmpty()) throw taskPresenter.prepareNotFoundView("Приоритет не найден");
 
+        if (statusRepository
+                .findByStatus(dto.getStatus().toLowerCase())
+                .isEmpty()) throw taskPresenter.prepareNotFoundView("Статус не найден");
+
         GeneralTaskDSResponseModel updatedTask = taskDS.updateTaskById(taskId, dto);
 
         return taskPresenter.prepareSuccessView(updatedTask);
@@ -168,5 +194,31 @@ public class TaskServiceImpl implements TaskService {
         GeneralTaskDSResponseModel foundTask = taskDS.getTaskByTaskId(taskId);
 
         return taskPresenter.prepareSuccessView(foundTask);
+    }
+
+    @Override
+    public void deleteTaskByTaskId(Integer taskId) {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
+        Integer accountId = myUserDetails.getId();
+
+        TaskEntity taskEntity;
+
+        try {
+            taskEntity = taskRepository.findById(taskId).orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
+
+            if (!taskEntity
+                    .getAuthorId()
+                    .equals(accountId)) throw new TaskForbiddenException("Вы не можете удалить чужую задачу");
+        } catch (TaskForbiddenException taskForbiddenException) {
+            throw taskPresenter.prepareForbiddenView(taskForbiddenException.getMessage());
+        } catch (TaskNotFoundException taskNotFoundException) {
+            throw taskPresenter.prepareNotFoundView(taskNotFoundException.getMessage());
+        }
+
+        taskRepository.delete(taskEntity);
     }
 }

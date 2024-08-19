@@ -1,6 +1,7 @@
 package TaskManagementSystem.entity;
 
-import TaskManagementSystem.dto.dbo.TaskDBO;
+import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
+import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import jakarta.persistence.*;
 
 @Entity
@@ -123,14 +124,17 @@ public class TaskEntity {
         this.priorityEntity = priorityEntity;
     }
 
-    public void updateTaskEntity(TaskDBO dto, AccountEntity authorEntity, AccountEntity executorEntity, PriorityEntity priorityEntity) {
+    public void updateTaskEntity(TaskDBOToUpdateTaskByTaskId dto, AccountEntity authorEntity, AccountEntity executorEntity, PriorityEntity priorityEntity, StatusEntity statusEntity) {
         this.title = dto.getTitle();
         this.description = dto.getDescription();
         this.priorityId = priorityEntity.getPriorityId();
         this.authorId = authorEntity.getAccountId();
         this.executorId = executorEntity.getAccountId();
+        this.priorityId = priorityEntity.getPriorityId();
+        this.statusId = statusEntity.getStatusId();
         this.comment = dto.getComment();
         this.priorityEntity = priorityEntity;
+        this.statusEntity = statusEntity;
         this.authorEntity = authorEntity;
         this.executorEntity = executorEntity;
     }

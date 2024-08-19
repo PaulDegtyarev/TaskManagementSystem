@@ -1,8 +1,9 @@
 package TaskManagementSystem.dataStore.impl;
 
 import TaskManagementSystem.dataStore.TaskDS;
+import TaskManagementSystem.dto.dSRequest.TaskDSRequestModel;
 import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
-import TaskManagementSystem.dto.dbo.TaskDBO;
+import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.entity.AccountEntity;
 import TaskManagementSystem.entity.PriorityEntity;
 import TaskManagementSystem.entity.StatusEntity;
@@ -35,31 +36,31 @@ public class TaskDSImpl implements TaskDS {
     }
 
     @Override
-    public GeneralTaskDSResponseModel createTask(TaskDBO dto) {
+    public GeneralTaskDSResponseModel createTask(TaskDSRequestModel dsRequest) {
         AccountEntity authorEntity = accountRepository
-                .findById(dto.getAuthorId())
+                .findById(dsRequest.getAuthorId())
                 .get();
 
         AccountEntity executorEntity = accountRepository
-                .findById(dto.getExecutorId())
+                .findById(dsRequest.getExecutorId())
                 .get();
 
         StatusEntity statusEntity = statusRepository
-                .findByStatus(dto.getStatus().toLowerCase())
+                .findByStatus(dsRequest.getStatus().toLowerCase())
                 .get();
 
         PriorityEntity priorityEntity = priorityRepository
-                .findByPriority(dto.getPriority().toLowerCase())
+                .findByPriority(dsRequest.getPriority().toLowerCase())
                 .get();
 
         TaskEntity newTask = new TaskEntity(
-                dto.getTitle(),
-                dto.getDescription(),
+                dsRequest.getTitle(),
+                dsRequest.getDescription(),
                 statusEntity.getStatusId(),
                 priorityEntity.getPriorityId(),
                 authorEntity.getAccountId(),
                 executorEntity.getAccountId(),
-                dto.getComment()
+                dsRequest.getComment()
         );
 
         newTask.setEntities(authorEntity, executorEntity, statusEntity, priorityEntity);
@@ -70,7 +71,7 @@ public class TaskDSImpl implements TaskDS {
     }
 
     @Override
-    public GeneralTaskDSResponseModel updateTaskById(Integer taskId, TaskDBO dto) {
+    public GeneralTaskDSResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto) {
         TaskEntity foundTask = taskRepository.findById(taskId).get();
 
         AccountEntity authorEntity = accountRepository
@@ -85,7 +86,11 @@ public class TaskDSImpl implements TaskDS {
                 .findByPriority(dto.getPriority().toLowerCase())
                 .get();
 
-        foundTask.updateTaskEntity(dto, authorEntity, executorEntity, priorityEntity);
+        StatusEntity statusEntity = statusRepository
+                .findByStatus(dto.getStatus().toLowerCase())
+                        .get();
+
+        foundTask.updateTaskEntity(dto, authorEntity, executorEntity, priorityEntity, statusEntity);
         taskRepository.save(foundTask);
 
         return dsResponseFactory.createGeneralResponse(foundTask);

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public class TaskDBO {
+public class TaskDBOToUpdateTaskByTaskId {
     @NotBlank
     private String title;
 
@@ -12,10 +12,11 @@ public class TaskDBO {
 
     private String description;
 
-    private String status;
-
     @NotBlank
     private String priority;
+
+    @NotBlank
+    private String status;
 
     @NotNull
     @Min(1)
@@ -27,10 +28,11 @@ public class TaskDBO {
 
     private String comment;
 
-    public TaskDBO(String title, String description, String priority, Integer authorId, Integer executorId, String comment) {
+    public TaskDBOToUpdateTaskByTaskId(String title, String description, String priority, String status, Integer authorId, Integer executorId, String comment) {
         this.title = title;
         this.description = description;
         this.priority = priority;
+        this.status = status;
         this.authorId = authorId;
         this.executorId = executorId;
         this.comment = comment;
@@ -42,14 +44,6 @@ public class TaskDBO {
 
     public @NotBlank String getDescription() {
         return description;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getStatus() {
-        return status;
     }
 
     public @NotBlank String getPriority() {
@@ -66,5 +60,9 @@ public class TaskDBO {
 
     public String getComment() {
         return comment;
+    }
+
+    public @NotBlank String getStatus() {
+        return status;
     }
 }
