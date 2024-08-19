@@ -25,7 +25,6 @@ public class TaskDBO {
     @Min(1)
     private Integer executorId;
 
-    @NotBlank
     private String comment;
 
     public TaskDBO(String title, String description, String priority, Integer authorId, Integer executorId, String comment) {
@@ -65,7 +64,7 @@ public class TaskDBO {
         return executorId;
     }
 
-    public @NotBlank String getComment() {
+    public String getComment() {
         return comment;
     }
 }

@@ -168,7 +168,7 @@ public class TaskControllerTest {
     @Test
     @DisplayName("Успешный тест обновления задачи по id")
     @WithMockUser(roles = "AUTHOR")
-    void updateTaskByIdSuccess() throws Exception {
+    void updateTaskByTaskIdSuccess() throws Exception {
         when(taskService.updateTaskById(eq(taskId), any(TaskDBO.class), any(BindingResult.class))).thenReturn(expectedResponse);
 
         String jsonDTO = objectMapper.writeValueAsString(dto);
@@ -190,9 +190,18 @@ public class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Тест выбрасывающий исключение с 400-ым статусом, если taskId <= 0 или null")
+    @WithMockUser(roles = "AUTHOR")
+    void updateTaskByTaskIdShouldReturnBadRequestExceptionForWrongTaskId() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}", taskId))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("Тест выбрасывающий исключение с 401-ым статусом для неавторизованного аккаунта")
     @WithAnonymousUser
-    void updateTaskByIdShouldReturnUnAuthorizeException() throws Exception {
+    void updateTaskByTaskIdShouldReturnUnAuthorizeException() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}", taskId))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
@@ -201,7 +210,7 @@ public class TaskControllerTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 403-им статусом для пользователя с ролью ROLE_EXECUTOR")
     @WithMockUser(roles = "EXECUTOR")
-    void updateTaskByIdShouldReturnForbiddenExceptionForExecutor() throws Exception {
+    void updateTaskByTaskIdShouldReturnForbiddenExceptionForExecutor() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}", taskId))
                 .andDo(print())
                 .andExpect(status().isForbidden())
@@ -209,7 +218,7 @@ public class TaskControllerTest {
     }
 
     @Test
-    @DisplayName("Успешный тест обновления задачи по id")
+    @DisplayName("Успешный тест поиска всех задач у автора")
     @WithMockUser(roles = "AUTHOR")
     void getMyAllTasksSuccess() throws Exception {
         List<GeneralTaskDSResponseModel> expectedResponse = List.of(

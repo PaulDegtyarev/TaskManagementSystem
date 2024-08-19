@@ -49,8 +49,7 @@ public class TaskServiceImpl implements TaskService {
     public GeneralTaskDSResponseModel createTask(TaskDBO dto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) throw taskPresenter.prepareBadRequestView("Неверные входные данные");
 
-        Optional<AccountEntity> authorEntity = accountRepository
-                .findById(dto.getAuthorId());
+        Optional<AccountEntity> authorEntity = accountRepository.findById(dto.getAuthorId());
 
         if (authorEntity.isEmpty()) throw taskPresenter.prepareNotFoundView("Автор не найден");
 
@@ -91,15 +90,13 @@ public class TaskServiceImpl implements TaskService {
         MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
         Integer accountId = myUserDetails.getId();
 
-        Optional<TaskEntity> taskEntity = taskRepository
-                .findById(taskId);
+        Optional<TaskEntity> taskEntity = taskRepository.findById(taskId);
 
         if (taskEntity.isEmpty()) throw taskPresenter.prepareNotFoundView("Задача не найдена");
 
         if (bindingResult.hasErrors()) throw taskPresenter.prepareBadRequestView("Неверные входные данные");
 
-        Optional<AccountEntity> authorEntity = accountRepository
-                    .findById(dto.getAuthorId());
+        Optional<AccountEntity> authorEntity = accountRepository.findById(dto.getAuthorId());
 
         if (authorEntity.isEmpty()) throw taskPresenter.prepareNotFoundView("Автор не найден");
 
@@ -157,7 +154,7 @@ public class TaskServiceImpl implements TaskService {
                 .getAuthentication();
 
         MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
-        Integer authorId = myUserDetails.getId();
+        Integer accountId = myUserDetails.getId();
 
         Optional<TaskEntity> taskEntity = taskRepository.findById(taskId);
 
@@ -166,7 +163,7 @@ public class TaskServiceImpl implements TaskService {
         if (!taskEntity
                 .get()
                 .getAuthorId()
-                .equals(authorId)) throw taskPresenter.prepareBadRequestView("У Вас нет такой задачи");
+                .equals(accountId)) throw taskPresenter.prepareBadRequestView("У Вас нет такой задачи");
 
         GeneralTaskDSResponseModel foundTask = taskDS.getTaskByTaskId(taskId);
 

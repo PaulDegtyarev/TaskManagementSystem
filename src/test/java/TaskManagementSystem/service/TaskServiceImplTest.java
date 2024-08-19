@@ -139,7 +139,7 @@ public class TaskServiceImplTest {
 
         authentication = mock(Authentication.class);
         myUserDetails = mock(MyUserDetails.class);
-        accountId = 1;
+        accountId = dto.getAuthorId();
     }
 
     @Test
@@ -255,7 +255,6 @@ public class TaskServiceImplTest {
     @Test
     @DisplayName("Успешный тест обновления задачи по taskId")
     void updateTaskByIdSuccess() {
-        accountId = dto.getAuthorId();
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(myUserDetails);
         when(myUserDetails.getId()).thenReturn(accountId);
@@ -384,7 +383,6 @@ public class TaskServiceImplTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 404-ым статусом, если исполнитель не существует")
     void updateTaskByIdShouldReturnNotFoundExceptionForNonExistenceExecutor() {
-        accountId = dto.getAuthorId();
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(myUserDetails);
         when(myUserDetails.getId()).thenReturn(accountId);
@@ -408,7 +406,6 @@ public class TaskServiceImplTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 403-им статусом, если роль исполнителя не ROLE_EXECUTOR")
     void updateTaskByIdShouldReturnForbiddenExceptionForExecutorWithWrongRole() {
-        accountId = dto.getAuthorId();
         executorEntity.setRoleEntity(new RoleEntity(RoleUtil.AUTHOR_En));
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
         when(bindingResult.hasErrors()).thenReturn(false);
@@ -431,7 +428,6 @@ public class TaskServiceImplTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 404-ым статусом, если приоритет не существует")
     void updateTaskByIdShouldReturnNotFoundExceptionForNonExistencePriority() {
-        accountId = dto.getAuthorId();
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
         when(bindingResult.hasErrors()).thenReturn(false);
         when(accountRepository.findById(dto.getAuthorId())).thenReturn(Optional.of(authorEntity));
@@ -470,5 +466,62 @@ public class TaskServiceImplTest {
 
         Assertions.assertEquals(expectedResponse, actualResponse);
         verify(taskPresenter).prepareSuccessView(expectedResponse);
+    }
+
+    @Test
+    @DisplayName("Успешный тест поиска своей задачи по taskId")
+    void getTaskByTaskIdSuccess() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
+        when(taskDS.getTaskByTaskId(taskId)).thenReturn(expectedResponse);
+        when(taskPresenter.prepareSuccessView(expectedResponse)).thenReturn(expectedResponse);
+
+        GeneralTaskDSResponseModel actualResponse = taskService.getTaskByTaskId(taskId);
+
+        Assertions.assertEquals(expectedResponse, actualResponse);
+
+        verify(taskPresenter).prepareSuccessView(expectedResponse);
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 404-ым статусом, если задача не существует")
+    void getTaskByTaskIdShouldReturnNotFoundExceptionForNonExistenceTask() {
+        taskId = 10;
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
+        when(taskPresenter.prepareNotFoundView(anyString())).thenThrow(new TaskNotFoundException("Задача не найдена"));
+
+        Assertions.assertThrows(
+                TaskNotFoundException.class,
+                () -> taskService.getTaskByTaskId(taskId)
+        );
+
+        verify(taskPresenter).prepareNotFoundView("Задача не найдена");
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 400-ым статусом, если у автора нет такой задачи")
+    void getTaskByTaskIdShouldReturnNotFoundException() {
+        accountId = 5;
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(myUserDetails);
+        when(myUserDetails.getId()).thenReturn(accountId);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
+        when(taskPresenter.prepareBadRequestView(anyString())).thenThrow(new TaskBadRequestException("У Вас нет такой задачи"));
+
+        Assertions.assertThrows(
+                TaskBadRequestException.class,
+                () -> taskService.getTaskByTaskId(taskId)
+        );
+
+        verify(taskPresenter).prepareBadRequestView("У Вас нет такой задачи");
     }
 }
