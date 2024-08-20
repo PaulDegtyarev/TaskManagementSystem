@@ -75,11 +75,31 @@ public class TaskController {
     @PutMapping(value = {"/status" ,"/{taskId}/status"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
-    public ResponseEntity<GeneralTaskDSResponseModel> updateStatusOfTaskByTaskId(
+    public ResponseEntity<GeneralTaskDSResponseModel> updateStatusOfTaskByTaskIdForAuthor(
             @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
             @RequestBody @Valid StatusDBO dto,
             BindingResult bindingResult
             ) {
-        return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskId(taskId, dto, bindingResult), HttpStatus.OK);
+        return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForAuthor(taskId, dto, bindingResult), HttpStatus.OK);
+    }
+
+    @PutMapping(value = {"/{taskId}/executor/{executorId}", "/executor/{executorId}", "/{taskId}/executor/", "/executor/"})
+    @PreAuthorize("hasRole('ROLE_AUTHOR')")
+    @Async
+    public ResponseEntity<GeneralTaskDSResponseModel> updateExecutorOfTaskByTaskId(
+            @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
+            @PathVariable(value = "executorId", required = false) @NotNull @Min(1) Integer executorId
+    ) {
+        return new ResponseEntity<>(taskService.updateExecutorOfTaskByTaskId(taskId, executorId), HttpStatus.OK);
+    }
+
+    @PutMapping(value = {"/executor/{taskId}", "/executor/"})
+    @PreAuthorize("hasRole('ROLE_EXECUTOR')")
+    @Async
+    public ResponseEntity<GeneralTaskDSResponseModel> updateStatusOfTaskByTaskIdForExecutor(
+            @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
+            @RequestBody @Valid StatusDBO dto
+            ) {
+        return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForExecutor(taskId, dto), HttpStatus.OK);
     }
 }

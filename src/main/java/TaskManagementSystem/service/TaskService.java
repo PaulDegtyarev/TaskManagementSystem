@@ -11,7 +11,6 @@ import java.util.List;
 public interface TaskService {
     GeneralTaskDSResponseModel createTask(GeneralTaskDBO dto, BindingResult bindingResult);
 
-
     GeneralTaskDSResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto, BindingResult bindingResult);
 
     List<GeneralTaskDSResponseModel> getAllTasksFromAuthor();
@@ -20,5 +19,9 @@ public interface TaskService {
 
     void deleteTaskByTaskId(Integer taskId);
 
-    GeneralTaskDSResponseModel updateStatusOfTaskByTaskId(Integer taskId, StatusDBO dto, BindingResult bindingResult);
+    GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForAuthor(Integer taskId, StatusDBO dto, BindingResult bindingResult);
+
+    GeneralTaskDSResponseModel updateExecutorOfTaskByTaskId(Integer taskId, Integer executorId);
+
+    GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto);
 }

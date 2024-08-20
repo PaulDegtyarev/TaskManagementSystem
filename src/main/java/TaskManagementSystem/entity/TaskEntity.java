@@ -102,6 +102,10 @@ public class TaskEntity {
         return authorEntity;
     }
 
+    public void setExecutorEntity(AccountEntity executorEntity) {
+        this.executorEntity = executorEntity;
+    }
+
     public AccountEntity getExecutorEntity() {
         return executorEntity;
     }
@@ -142,5 +146,10 @@ public class TaskEntity {
     public void updateStatus(StatusEntity statusEntity) {
         this.statusId = statusEntity.getStatusId();
         this.statusEntity = statusEntity;
+    }
+
+    public void updateExecutor(AccountEntity executorEntity) {
+        this.executorId = executorEntity.getAccountId();
+        this.executorEntity = executorEntity;
     }
 }

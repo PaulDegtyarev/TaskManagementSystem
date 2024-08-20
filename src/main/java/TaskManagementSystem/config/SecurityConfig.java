@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/task").hasRole("AUTHOR")
-                .requestMatchers(HttpMethod.PUT, "/task/{taskId}", "/task/{taskId}/status").hasRole("AUTHOR")
+                .requestMatchers(HttpMethod.PUT, "/task/{taskId}", "/task/{taskId}/status", "/task/{taskId}/executor/{executorId}").hasRole("AUTHOR")
                 .requestMatchers(HttpMethod.GET, "/task/me", "/task/me/{taskId}").hasRole("AUTHOR")
                 .requestMatchers(HttpMethod.DELETE, "/task/me", "/task/me/{taskId}").hasRole("AUTHOR")
                 .requestMatchers("/task/**").authenticated()

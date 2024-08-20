@@ -69,6 +69,7 @@ public class TaskControllerTest {
     private Integer taskId;
     private TaskDBOToUpdateTaskByTaskId dboToUpdateTaskByTaskId;
     private StatusDBO statusDBO;
+    private Integer executorId;
 
     @BeforeEach
     void initService() {
@@ -101,6 +102,7 @@ public class TaskControllerTest {
                 "Перед сдачей задачи напишите мне или позвоните"
         );
 
+        executorId = dto.getExecutorId();
         executorEntity = new AccountEntity(
                 "executor@executor.ru",
                 "executor",
@@ -109,6 +111,7 @@ public class TaskControllerTest {
                 2
         );
         executorEntity.setRoleEntity(new RoleEntity("ROLE_EXECUTOR"));
+        executorEntity.setAccountId(executorId);
 
         taskId = 2;
 
@@ -409,8 +412,8 @@ public class TaskControllerTest {
     @Test
     @DisplayName("Успешный тест обновления статуса у задания")
     @WithMockUser(roles = "AUTHOR")
-    void updateStatusOfTaskByTaskIdSuccess() throws Exception {
-        when(taskService.updateStatusOfTaskByTaskId(eq(taskId), any(StatusDBO.class), any(BindingResult.class))).thenReturn(expectedResponse);
+    void updateStatusOfTaskByTaskIdForAuthorSuccess() throws Exception {
+        when(taskService.updateStatusOfTaskByTaskIdForAuthor(eq(taskId), any(StatusDBO.class), any(BindingResult.class))).thenReturn(expectedResponse);
 
         String dBOJson = objectMapper.writeValueAsString(statusDBO);
 
@@ -433,7 +436,7 @@ public class TaskControllerTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 400-ым статусом")
     @WithMockUser(roles = "AUTHOR")
-    void updateStatusOfTaskByTaskIdShouldReturnBadRequestException() throws Exception {
+    void updateStatusOfTaskByTaskIdForAuthorShouldReturnBadRequestException() throws Exception {
         taskId = -1;
 
         mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/status", taskId))
@@ -444,7 +447,7 @@ public class TaskControllerTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 401-ым статусом для неавторизованного аккаунта")
     @WithAnonymousUser
-    void updateStatusOfTaskByTaskIdShouldReturnUnAuthorizeException() throws Exception {
+    void updateStatusOfTaskByTaskIdForAuthorShouldReturnUnAuthorizeException() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/status", taskId))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
@@ -453,7 +456,7 @@ public class TaskControllerTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 403-им статусом")
     @WithMockUser(roles = "EXECUTOR")
-    void updateStatusOfTaskByTaskIdShouldReturnForbiddenException() throws Exception {
+    void updateStatusOfTaskByTaskIdForAuthorShouldReturnForbiddenException() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/status", taskId))
                 .andDo(print())
                 .andExpect(status().isForbidden())
@@ -463,10 +466,10 @@ public class TaskControllerTest {
     @Test
     @DisplayName("Тест выбрасывающий исключение с 404-ым статусом")
     @WithMockUser(roles = "AUTHOR")
-    void updateStatusOfTaskByTaskIdShouldReturnNotFoundExceptionForExecutor() throws Exception {
+    void updateStatusOfTaskByTaskIdForAuthorShouldReturnNotFoundExceptionForExecutor() throws Exception {
         taskId = 10;
 
-        when(taskService.updateStatusOfTaskByTaskId(anyInt(), any(StatusDBO.class), any(BindingResult.class)))
+        when(taskService.updateStatusOfTaskByTaskIdForAuthor(anyInt(), any(StatusDBO.class), any(BindingResult.class)))
                 .thenThrow(new TaskNotFoundException("Задача не найдена"));
 
         String dBOJson = objectMapper.writeValueAsString(statusDBO);
@@ -474,6 +477,70 @@ public class TaskControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/status", taskId)
                         .content(dBOJson)
                         .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Успешный тест обновления исполнителя у задания")
+    @WithMockUser(roles = "AUTHOR")
+    void updateExecutorOfTaskByTaskIdSuccess() throws Exception {
+        when(taskService.updateExecutorOfTaskByTaskId(eq(taskId), eq(executorId))).thenReturn(expectedResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/executor/{executorId}", taskId, executorId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.taskId").value(expectedResponse.getTaskId()))
+                .andExpect(jsonPath("$.title").value(expectedResponse.getTitle()))
+                .andExpect(jsonPath("$.description").value(expectedResponse.getDescription()))
+                .andExpect(jsonPath("$.status").value(expectedResponse.getStatus()))
+                .andExpect(jsonPath("$.priority").value(expectedResponse.getPriority()))
+                .andExpect(jsonPath("$.author").value(expectedResponse.getAuthor()))
+                .andExpect(jsonPath("$.executor").value(expectedResponse.getExecutor()))
+                .andExpect(jsonPath("$.comment").value(expectedResponse.getComment()))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 400-ым статусом")
+    @WithMockUser(roles = "AUTHOR")
+    void updateExecutorOfTaskByTaskIdShouldReturnBadRequestException() throws Exception {
+        taskId = -1;
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/executor/{executorId}", taskId, executorId))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 401-ым статусом для неавторизованного аккаунта")
+    @WithAnonymousUser
+    void updateExecutorOfTaskByTaskIdShouldReturnUnAuthorizeException() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/executor/{executorId}", taskId, executorId))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 403-им статусом")
+    @WithMockUser(roles = "EXECUTOR")
+    void updateExecutorOfTaskByTaskIdShouldReturnForbiddenException() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/executor/{executorId}", taskId, executorId))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 404-ым статусом")
+    @WithMockUser(roles = "AUTHOR")
+    void updateExecutorOfTaskByTaskIdShouldReturnNotFoundExceptionForExecutor() throws Exception {
+        taskId = 10;
+
+        when(taskService.updateExecutorOfTaskByTaskId(anyInt(), anyInt()))
+                .thenThrow(new TaskNotFoundException("Задача не найдена"));
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/task/{taskId}/executor/{executorId}", taskId, executorId))
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }

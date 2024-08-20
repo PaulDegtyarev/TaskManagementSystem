@@ -228,7 +228,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public GeneralTaskDSResponseModel updateStatusOfTaskByTaskId(Integer taskId, StatusDBO dto, BindingResult bindingResult) {
+    public GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForAuthor(Integer taskId, StatusDBO dto, BindingResult bindingResult) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -270,5 +270,93 @@ public class TaskServiceImpl implements TaskService {
         GeneralTaskDSResponseModel taskWithUpdatedStatus = dsResponseFactory.createGeneralResponse(taskEntity);
 
         return taskPresenter.prepareSuccessView(taskWithUpdatedStatus);
+    }
+
+    @Override
+    public GeneralTaskDSResponseModel updateExecutorOfTaskByTaskId(Integer taskId, Integer executorId) {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
+        Integer accountId = myUserDetails.getId();
+
+        TaskEntity taskEntityToUpdateExecutor;
+        AccountEntity executorEntity;
+
+        try {
+            taskEntityToUpdateExecutor = taskRepository.findById(taskId).orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
+
+            if (!taskEntityToUpdateExecutor
+                    .getAuthorId()
+                    .equals(accountId)) {
+                throw new TaskForbiddenException("Вы не можете обновить исполнителя чужой задачи");
+            }
+
+            executorEntity = accountRepository.findById(executorId).orElseThrow(() -> new TaskNotFoundException("Исполнитель не найден"));
+
+            if (!executorEntity
+                    .getRoleEntity()
+                    .getRole()
+                    .equals(RoleUtil.EXECUTOR_En)) throw new TaskBadRequestException("Автор не может быть исполнителем");
+
+        } catch (TaskNotFoundException taskNotFoundException) {
+            throw taskPresenter.prepareNotFoundView(taskNotFoundException.getMessage());
+        } catch (TaskForbiddenException taskForbiddenException) {
+            throw taskPresenter.prepareForbiddenView(taskForbiddenException.getMessage());
+        } catch (TaskBadRequestException taskBadRequestException) {
+            throw taskPresenter.prepareBadRequestView(taskBadRequestException.getMessage());
+        }
+
+        taskEntityToUpdateExecutor.updateExecutor(executorEntity);
+        taskRepository.save(taskEntityToUpdateExecutor);
+
+        GeneralTaskDSResponseModel updatedTask = dsResponseFactory.createGeneralResponse(taskEntityToUpdateExecutor);
+
+        return taskPresenter.prepareSuccessView(updatedTask);
+    }
+
+    @Override
+    public GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto) {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
+        Integer accountId = myUserDetails.getId();
+
+        TaskEntity taskEntityToUpdateStatus;
+        StatusEntity statusEntity;
+
+        try {
+            taskEntityToUpdateStatus = taskRepository
+                    .findById(taskId)
+                    .orElseThrow(() -> new TaskNotFoundException("Задача не найена"));
+
+            if (!taskEntityToUpdateStatus
+                    .getExecutorEntity()
+                    .getAccountId()
+                    .equals(accountId)) {
+                throw new TaskForbiddenException("Вы не можете обновить статус чужой задачи");
+            }
+
+            statusEntity = statusRepository
+                    .findByStatus(dto
+                            .getStatus()
+                            .toLowerCase())
+                    .orElseThrow(() -> new TaskNotFoundException("Статус не найден"));
+
+        } catch (TaskNotFoundException taskNotFoundException) {
+            throw taskPresenter.prepareNotFoundView(taskNotFoundException.getMessage());
+        } catch (TaskForbiddenException taskForbiddenException) {
+            throw taskPresenter.prepareForbiddenView(taskForbiddenException.getMessage());
+        }
+
+        taskEntityToUpdateStatus.updateStatus(statusEntity);
+        taskRepository.save(taskEntityToUpdateStatus);
+
+        GeneralTaskDSResponseModel updatedTask = dsResponseFactory.createGeneralResponse(taskEntityToUpdateStatus);
+
+        return taskPresenter.prepareSuccessView(updatedTask);
     }
 }
