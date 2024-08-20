@@ -5,12 +5,15 @@ import TaskManagementSystem.dataStore.TaskDS;
 import TaskManagementSystem.dto.dSRequest.TaskDSRequestModel;
 import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
 import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
+import TaskManagementSystem.dto.dbo.StatusDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.entity.AccountEntity;
+import TaskManagementSystem.entity.StatusEntity;
 import TaskManagementSystem.entity.TaskEntity;
 import TaskManagementSystem.exception.task.TaskBadRequestException;
 import TaskManagementSystem.exception.task.TaskForbiddenException;
 import TaskManagementSystem.exception.task.TaskNotFoundException;
+import TaskManagementSystem.factory.DSResponseFactory;
 import TaskManagementSystem.presenter.TaskPresenter;
 import TaskManagementSystem.repository.AccountRepository;
 import TaskManagementSystem.repository.PriorityRepository;
@@ -36,15 +39,17 @@ public class TaskServiceImpl implements TaskService {
     private PriorityRepository priorityRepository;
     private TaskDS taskDS;
     private TaskRepository taskRepository;
+    private DSResponseFactory dsResponseFactory;
 
     @Autowired
-    public TaskServiceImpl(TaskPresenter taskPresenter, AccountRepository accountRepository, StatusRepository statusRepository, PriorityRepository priorityRepository, TaskDS taskDS, TaskRepository taskRepository) {
+    public TaskServiceImpl(TaskPresenter taskPresenter, AccountRepository accountRepository, StatusRepository statusRepository, PriorityRepository priorityRepository, TaskDS taskDS, TaskRepository taskRepository, DSResponseFactory dsResponseFactory) {
         this.taskPresenter = taskPresenter;
         this.accountRepository = accountRepository;
         this.statusRepository = statusRepository;
         this.priorityRepository = priorityRepository;
         this.taskDS = taskDS;
         this.taskRepository = taskRepository;
+        this.dsResponseFactory = dsResponseFactory;
     }
 
     @Override
@@ -220,5 +225,50 @@ public class TaskServiceImpl implements TaskService {
         }
 
         taskRepository.delete(taskEntity);
+    }
+
+    @Override
+    public GeneralTaskDSResponseModel updateStatusOfTaskByTaskId(Integer taskId, StatusDBO dto, BindingResult bindingResult) {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
+        Integer accountId = myUserDetails.getId();
+
+        TaskEntity taskEntity;
+        StatusEntity statusEntity;
+
+        try {
+            taskEntity = taskRepository
+                    .findById(taskId)
+                    .orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
+
+            if (!taskEntity
+                    .getAuthorId()
+                    .equals(accountId)) throw new TaskForbiddenException("Вы не можете обновить статус чужой задачи");
+
+            if (bindingResult.hasErrors()) throw new TaskBadRequestException("Неверно введенные данные");
+
+            statusEntity = statusRepository
+                    .findByStatus(dto
+                            .getStatus()
+                            .toLowerCase())
+                    .orElseThrow(() -> new TaskNotFoundException("Статус не найден"));
+
+        } catch (TaskNotFoundException taskNotFoundException) {
+            throw taskPresenter.prepareNotFoundView(taskNotFoundException.getMessage());
+        } catch (TaskForbiddenException taskForbiddenException) {
+            throw taskPresenter.prepareForbiddenView(taskForbiddenException.getMessage());
+        } catch (TaskBadRequestException taskBadRequestException) {
+            throw taskPresenter.prepareBadRequestView(taskBadRequestException.getMessage());
+        }
+
+        taskEntity.updateStatus(statusEntity);
+        taskRepository.save(taskEntity);
+
+        GeneralTaskDSResponseModel taskWithUpdatedStatus = dsResponseFactory.createGeneralResponse(taskEntity);
+
+        return taskPresenter.prepareSuccessView(taskWithUpdatedStatus);
     }
 }

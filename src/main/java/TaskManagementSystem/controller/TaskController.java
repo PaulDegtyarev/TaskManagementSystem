@@ -2,6 +2,7 @@ package TaskManagementSystem.controller;
 
 import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
 import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
+import TaskManagementSystem.dto.dbo.StatusDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.service.TaskService;
 import jakarta.validation.Valid;
@@ -69,5 +70,16 @@ public class TaskController {
     @Async
     public void deleteMyTaskByTaskId(@PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId) {
         taskService.deleteTaskByTaskId(taskId);
+    }
+
+    @PutMapping(value = {"/status" ,"/{taskId}/status"})
+    @PreAuthorize("hasRole('ROLE_AUTHOR')")
+    @Async
+    public ResponseEntity<GeneralTaskDSResponseModel> updateStatusOfTaskByTaskId(
+            @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
+            @RequestBody @Valid StatusDBO dto,
+            BindingResult bindingResult
+            ) {
+        return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskId(taskId, dto, bindingResult), HttpStatus.OK);
     }
 }

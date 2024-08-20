@@ -2,6 +2,7 @@ package TaskManagementSystem.service;
 
 import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
 import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
+import TaskManagementSystem.dto.dbo.StatusDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import org.springframework.validation.BindingResult;
 
@@ -18,4 +19,6 @@ public interface TaskService {
     GeneralTaskDSResponseModel getTaskByTaskId(Integer taskId);
 
     void deleteTaskByTaskId(Integer taskId);
+
+    GeneralTaskDSResponseModel updateStatusOfTaskByTaskId(Integer taskId, StatusDBO dto, BindingResult bindingResult);
 }

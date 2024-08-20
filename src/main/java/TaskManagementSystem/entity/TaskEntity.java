@@ -138,4 +138,9 @@ public class TaskEntity {
         this.authorEntity = authorEntity;
         this.executorEntity = executorEntity;
     }
+
+    public void updateStatus(StatusEntity statusEntity) {
+        this.statusId = statusEntity.getStatusId();
+        this.statusEntity = statusEntity;
+    }
 }
