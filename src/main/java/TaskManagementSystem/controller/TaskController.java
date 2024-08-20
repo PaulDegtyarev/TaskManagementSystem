@@ -40,7 +40,7 @@ public class TaskController {
         return new ResponseEntity<>(taskService.createTask(dto, bindingResult), HttpStatus.CREATED);
     }
 
-    @PutMapping(value = {"/", "/{taskId}"})
+    @PutMapping(value = {"/me/", "/me/{taskId}"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     public ResponseEntity<GeneralTaskDSResponseModel> updateTaskByTaskId(
@@ -72,7 +72,7 @@ public class TaskController {
         taskService.deleteTaskByTaskId(taskId);
     }
 
-    @PutMapping(value = {"/status" ,"/{taskId}/status"})
+    @PutMapping(value = {"/author/{taskId}/status", "/author/status"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     public ResponseEntity<GeneralTaskDSResponseModel> updateStatusOfTaskByTaskIdForAuthor(
@@ -83,7 +83,7 @@ public class TaskController {
         return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForAuthor(taskId, dto, bindingResult), HttpStatus.OK);
     }
 
-    @PutMapping(value = {"/{taskId}/executor/{executorId}", "/executor/{executorId}", "/{taskId}/executor/", "/executor/"})
+    @PutMapping(value = {"/{taskId}/executor/{executorId}", "/executor/{executorId}", "/{taskId}/executor/"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     public ResponseEntity<GeneralTaskDSResponseModel> updateExecutorOfTaskByTaskId(
@@ -93,13 +93,14 @@ public class TaskController {
         return new ResponseEntity<>(taskService.updateExecutorOfTaskByTaskId(taskId, executorId), HttpStatus.OK);
     }
 
-    @PutMapping(value = {"/executor/{taskId}", "/executor/"})
+    @PutMapping(value = {"/executor/{taskId}/status", "/executor/status"})
     @PreAuthorize("hasRole('ROLE_EXECUTOR')")
     @Async
     public ResponseEntity<GeneralTaskDSResponseModel> updateStatusOfTaskByTaskIdForExecutor(
             @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
-            @RequestBody @Valid StatusDBO dto
+            @RequestBody @Valid StatusDBO dto,
+            BindingResult bindingResult
             ) {
-        return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForExecutor(taskId, dto), HttpStatus.OK);
+        return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForExecutor(taskId, dto, bindingResult), HttpStatus.OK);
     }
 }

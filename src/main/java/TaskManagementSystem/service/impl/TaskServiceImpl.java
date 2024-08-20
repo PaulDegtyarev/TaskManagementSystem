@@ -317,7 +317,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto) {
+    public GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto, BindingResult bindingResult) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -340,6 +340,8 @@ public class TaskServiceImpl implements TaskService {
                 throw new TaskForbiddenException("Вы не можете обновить статус чужой задачи");
             }
 
+            if (bindingResult.hasErrors()) {throw new TaskBadRequestException("Данные неверно введены");}
+
             statusEntity = statusRepository
                     .findByStatus(dto
                             .getStatus()
@@ -348,6 +350,8 @@ public class TaskServiceImpl implements TaskService {
 
         } catch (TaskNotFoundException taskNotFoundException) {
             throw taskPresenter.prepareNotFoundView(taskNotFoundException.getMessage());
+        } catch (TaskBadRequestException taskBadRequestException) {
+            throw taskPresenter.prepareBadRequestView(taskBadRequestException.getMessage());
         } catch (TaskForbiddenException taskForbiddenException) {
             throw taskPresenter.prepareForbiddenView(taskForbiddenException.getMessage());
         }

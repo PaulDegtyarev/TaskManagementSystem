@@ -23,5 +23,5 @@ public interface TaskService {
 
     GeneralTaskDSResponseModel updateExecutorOfTaskByTaskId(Integer taskId, Integer executorId);
 
-    GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto);
+    GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto, BindingResult bindingResult);
 }
