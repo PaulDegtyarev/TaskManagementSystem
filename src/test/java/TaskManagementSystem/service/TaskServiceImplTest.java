@@ -80,6 +80,8 @@ public class TaskServiceImplTest {
     private Integer accountId;
     private StatusDBO statusDBO;
     private Integer executorId;
+    private String status;
+    private String priority;
 
     @InjectMocks
     private TaskServiceImpl taskService;
@@ -180,6 +182,9 @@ public class TaskServiceImplTest {
         statusDBO = new StatusDBO(
             "В процессе"
         );
+
+        status = statusDBO.getStatus();
+        priority = dto.getPriority();
     }
 
     @Test
@@ -1013,4 +1018,38 @@ public class TaskServiceImplTest {
 
         verify(taskPresenter).prepareNotFoundView(taskNotFoundException.getMessage());
     }
+
+    @Test
+    @DisplayName("Успешный тест поиска всех задач конкретного аккаунта")
+    void getTasksByAccountIdAndFiltersSuccess() {
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(authorEntity));
+        when(taskRepository.findTasksByAccountIdAndFilters(accountId, status.toLowerCase(), priority.toLowerCase())).thenReturn(List.of(taskEntity));
+        when(dsResponseFactory.createGeneralResponse(taskEntity)).thenReturn(expectedResponse);
+        when(taskPresenter.prepareSuccessView(List.of(expectedResponse))).thenReturn(List.of(expectedResponse));
+
+        List<GeneralTaskDSResponseModel> actualResponse = taskService.getTasksByAccountIdAndFilters(accountId, status.toLowerCase(), priority.toLowerCase());
+
+        Assertions.assertEquals(List.of(expectedResponse), actualResponse);
+
+        verify(dsResponseFactory).createGeneralResponse(taskEntity);
+        verify(taskPresenter).prepareSuccessView(List.of(expectedResponse));
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 404-ым статусом, если указанный аккаунт не существует")
+    void getTasksByAccountIdAndFiltersShouldReturnNotFoundExceptionForNonExistenceAccount() {
+        when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
+
+        TaskNotFoundException taskNotFoundException = new TaskNotFoundException("Аккаунт не найден");
+
+        when(taskPresenter.prepareNotFoundView(anyString())).thenThrow(taskNotFoundException);
+
+        Assertions.assertThrows(
+                TaskNotFoundException.class,
+                () -> taskService.getTasksByAccountIdAndFilters(accountId, status.toLowerCase(), priority.toLowerCase())
+        );
+
+        verify(taskPresenter).prepareNotFoundView(taskNotFoundException.getMessage());
+    }
+
 }

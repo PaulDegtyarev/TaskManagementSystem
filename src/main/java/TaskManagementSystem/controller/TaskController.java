@@ -18,6 +18,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/task")
@@ -102,5 +103,15 @@ public class TaskController {
             BindingResult bindingResult
             ) {
         return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForExecutor(taskId, dto, bindingResult), HttpStatus.OK);
+    }
+
+    @GetMapping("/{accountId}/search")
+    @Async
+    public ResponseEntity<List<GeneralTaskDSResponseModel>> getTasksByAccountIdAndFilters(
+            @PathVariable(value = "accountId", required = false) @NotNull @Min(1) Integer accountId,
+            @RequestParam(value = "status", required = false, defaultValue = "") String status,
+            @RequestParam(value = "priority", required = false, defaultValue = "") String priority
+    ) {
+        return new ResponseEntity<>(taskService.getTasksByAccountIdAndFilters(accountId, status, priority), HttpStatus.OK);
     }
 }

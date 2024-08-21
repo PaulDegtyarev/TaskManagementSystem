@@ -8,6 +8,7 @@ import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
 import TaskManagementSystem.dto.dbo.StatusDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.entity.AccountEntity;
+import TaskManagementSystem.entity.PriorityEntity;
 import TaskManagementSystem.entity.StatusEntity;
 import TaskManagementSystem.entity.TaskEntity;
 import TaskManagementSystem.exception.task.TaskBadRequestException;
@@ -362,5 +363,30 @@ public class TaskServiceImpl implements TaskService {
         GeneralTaskDSResponseModel updatedTask = dsResponseFactory.createGeneralResponse(taskEntityToUpdateStatus);
 
         return taskPresenter.prepareSuccessView(updatedTask);
+    }
+
+    @Override
+    public List<GeneralTaskDSResponseModel> getTasksByAccountIdAndFilters(Integer accountId, String status, String priority) {
+        AccountEntity accountEntity;
+
+        try {
+            accountEntity = accountRepository
+                    .findById(accountId)
+                    .orElseThrow(() -> new TaskNotFoundException("Аккаунт не найден"));
+
+        } catch (TaskNotFoundException taskNotFoundException) {
+            throw taskPresenter.prepareNotFoundView(taskNotFoundException.getMessage());
+        }
+
+        List<GeneralTaskDSResponseModel> foundTasks = taskRepository
+                .findTasksByAccountIdAndFilters(
+                        accountEntity.getAccountId(),
+                        status.toLowerCase(),
+                        priority.toLowerCase())
+                .stream()
+                .map(dsResponseFactory::createGeneralResponse)
+                .toList();
+
+        return taskPresenter.prepareSuccessView(foundTasks);
     }
 }

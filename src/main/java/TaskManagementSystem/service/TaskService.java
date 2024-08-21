@@ -7,6 +7,7 @@ import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import org.springframework.validation.BindingResult;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskService {
     GeneralTaskDSResponseModel createTask(GeneralTaskDBO dto, BindingResult bindingResult);
@@ -24,4 +25,7 @@ public interface TaskService {
     GeneralTaskDSResponseModel updateExecutorOfTaskByTaskId(Integer taskId, Integer executorId);
 
     GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto, BindingResult bindingResult);
+
+//    List<GeneralTaskDSResponseModel> getTasksByAccountIdAndFilters(Integer accountId, Optional<String> status, Optional<String> priority);
+    List<GeneralTaskDSResponseModel> getTasksByAccountIdAndFilters(Integer accountId, String status, String priority);
 }

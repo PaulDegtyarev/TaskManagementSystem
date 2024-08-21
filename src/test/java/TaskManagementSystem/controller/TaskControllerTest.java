@@ -70,6 +70,8 @@ public class TaskControllerTest {
     private TaskDBOToUpdateTaskByTaskId dboToUpdateTaskByTaskId;
     private StatusDBO statusDBO;
     private Integer executorId;
+    private String status;
+    private String priority;
 
     @BeforeEach
     void initService() {
@@ -139,6 +141,9 @@ public class TaskControllerTest {
         statusDBO = new StatusDBO(
             "В процессе"
         );
+
+        status = statusDBO.getStatus();
+        priority = dto.getPriority();
     }
 
     @Test
@@ -613,6 +618,66 @@ public class TaskControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.put("/task/executor/{taskId}/status", taskId)
                         .content(dBOJson)
                         .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Успешный тест поиска всех задач у аккаунта")
+    @WithMockUser(roles = {"AUTHOR", "EXECUTOR"})
+    void getTasksByAccountIdAndFiltersSuccess() throws Exception {
+        when(taskService.getTasksByAccountIdAndFilters(anyInt(), anyString(), anyString())).thenReturn(List.of(expectedResponse));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/task/{accountId}/search", executorId)
+                        .param("status", status)
+                        .param("priority", priority))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<GeneralTaskDSResponseModel> actualResponse = taskService.getTasksByAccountIdAndFilters(executorId, status.toLowerCase(), priority.toLowerCase());
+
+        Assertions.assertEquals(List.of(expectedResponse), actualResponse);
+
+        verify(taskService).getTasksByAccountIdAndFilters(executorId, status.toLowerCase(), priority.toLowerCase());
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 400-ым статусом")
+    @WithMockUser(roles = {"AUTHOR", "EXECUTOR"})
+    void getTasksByAccountIdAndFiltersShouldReturnBadRequestException() throws Exception {
+        executorId = -1;
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/task/{accountId}/search", executorId)
+                        .param("status", status)
+                        .param("priority", priority))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 401-ым статусом для неавторизованного аккаунта")
+    @WithAnonymousUser
+    void getTasksByAccountIdAndFiltersShouldReturnUnAuthorizeException() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/task/{accountId}/search", executorId)
+                        .param("status", status)
+                        .param("priority", priority))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Тест выбрасывающий исключение с 404-ым статусом")
+    @WithMockUser(roles = {"AUTHOR", "EXECUTOR"})
+    void getTasksByAccountIdAndFiltersShouldReturnNotFoundExceptionForExecutor() throws Exception {
+        executorId = 10;
+
+        when(taskService.getTasksByAccountIdAndFilters(anyInt(), anyString(), anyString()))
+                .thenThrow(new TaskNotFoundException("Аккаунт не найден"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/task/{accountId}/search", executorId)
+                        .param("status", status)
+                        .param("priority", priority))
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }
