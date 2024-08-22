@@ -51,7 +51,7 @@ public class TaskController {
         return new ResponseEntity<>(taskService.createTask(dto, bindingResult), HttpStatus.CREATED);
     }
 
-    @PutMapping(value = {"/me/", "/me/{taskId}"})
+    @PutMapping("/me/{taskId}")
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     @Operation(
@@ -79,7 +79,7 @@ public class TaskController {
         return new ResponseEntity<>(taskService.getAllTasksFromAuthor(), HttpStatus.OK);
     }
 
-    @GetMapping(value = {"/me/", "/me/{taskId}"})
+    @GetMapping("/me/{taskId}")
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     @Operation(
@@ -91,7 +91,7 @@ public class TaskController {
         return new ResponseEntity<>(taskService.getTaskByTaskId(taskId), HttpStatus.OK);
     }
 
-    @DeleteMapping(value = {"/me/", "/me/{taskId}"})
+    @DeleteMapping("/me/{taskId}")
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     @Operation(
@@ -103,7 +103,7 @@ public class TaskController {
         taskService.deleteTaskByTaskId(taskId);
     }
 
-    @PutMapping(value = {"/author/{taskId}/status", "/author/status"})
+    @PutMapping("/author/{taskId}/status")
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     @Operation(
@@ -119,7 +119,7 @@ public class TaskController {
         return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForAuthor(taskId, dto, bindingResult), HttpStatus.OK);
     }
 
-    @PutMapping(value = {"/{taskId}/executor/{executorId}", "/executor/{executorId}", "/{taskId}/executor/"})
+    @PutMapping("/{taskId}/executor/{executorId}")
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     @Operation(
@@ -134,7 +134,7 @@ public class TaskController {
         return new ResponseEntity<>(taskService.updateExecutorOfTaskByTaskId(taskId, executorId), HttpStatus.OK);
     }
 
-    @PutMapping(value = {"/executor/{taskId}/status", "/executor/status"})
+    @PutMapping("/executor/{taskId}/status")
     @PreAuthorize("hasRole('ROLE_EXECUTOR')")
     @Async
     @Operation(

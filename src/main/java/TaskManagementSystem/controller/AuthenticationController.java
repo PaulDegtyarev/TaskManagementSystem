@@ -25,9 +25,9 @@ public class AuthenticationController {
         this.authenticationService = authenticationService;
     }
 
-    @GetMapping("/signin")
+    @PostMapping("/signin")
     @Async
-    public String signin() {
+    public String signin(@RequestParam("username") String username, @RequestParam("password") String password) {
         return "signin";
     }
 
