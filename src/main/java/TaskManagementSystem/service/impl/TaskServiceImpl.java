@@ -3,18 +3,17 @@ package TaskManagementSystem.service.impl;
 import TaskManagementSystem.config.MyUserDetails;
 import TaskManagementSystem.dataStore.TaskDS;
 import TaskManagementSystem.dto.dSRequest.TaskDSRequestModel;
-import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.TaskServiceResponseModel;
 import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
 import TaskManagementSystem.dto.dbo.StatusDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.entity.AccountEntity;
-import TaskManagementSystem.entity.PriorityEntity;
 import TaskManagementSystem.entity.StatusEntity;
 import TaskManagementSystem.entity.TaskEntity;
 import TaskManagementSystem.exception.task.TaskBadRequestException;
 import TaskManagementSystem.exception.task.TaskForbiddenException;
 import TaskManagementSystem.exception.task.TaskNotFoundException;
-import TaskManagementSystem.factory.DSResponseFactory;
+import TaskManagementSystem.factory.ServiceResponseFactory;
 import TaskManagementSystem.presenter.TaskPresenter;
 import TaskManagementSystem.repository.AccountRepository;
 import TaskManagementSystem.repository.PriorityRepository;
@@ -40,21 +39,31 @@ public class TaskServiceImpl implements TaskService {
     private PriorityRepository priorityRepository;
     private TaskDS taskDS;
     private TaskRepository taskRepository;
-    private DSResponseFactory dsResponseFactory;
+    private ServiceResponseFactory serviceResponseFactory;
 
     @Autowired
-    public TaskServiceImpl(TaskPresenter taskPresenter, AccountRepository accountRepository, StatusRepository statusRepository, PriorityRepository priorityRepository, TaskDS taskDS, TaskRepository taskRepository, DSResponseFactory dsResponseFactory) {
+    public TaskServiceImpl(TaskPresenter taskPresenter, AccountRepository accountRepository, StatusRepository statusRepository, PriorityRepository priorityRepository, TaskDS taskDS, TaskRepository taskRepository, ServiceResponseFactory serviceResponseFactory) {
         this.taskPresenter = taskPresenter;
         this.accountRepository = accountRepository;
         this.statusRepository = statusRepository;
         this.priorityRepository = priorityRepository;
         this.taskDS = taskDS;
         this.taskRepository = taskRepository;
-        this.dsResponseFactory = dsResponseFactory;
+        this.serviceResponseFactory = serviceResponseFactory;
     }
 
+    /**
+     * Создание новой задачи.
+     *
+     * @param dto объект {@link GeneralTaskDBO}, содержащий данные о задаче
+     * @param bindingResult объект {@link BindingResult}, содержащий любые ошибки валидации
+     * @return объект {@link TaskServiceResponseModel}, представляющий созданную задачу
+     * @throws TaskNotFoundException   если автор или исполнитель не найдены
+     * @throws TaskBadRequestException если идентификатор автора не совпадает с идентификатором аутентифицированного пользователя или если автор является исполнителем
+     * @throws TaskForbiddenException  если аутентифицированный пользователь не авторизован на создание задачи
+     */
     @Override
-    public GeneralTaskDSResponseModel createTask(GeneralTaskDBO dto, BindingResult bindingResult) {
+    public TaskServiceResponseModel createTask(GeneralTaskDBO dto, BindingResult bindingResult) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -104,13 +113,24 @@ public class TaskServiceImpl implements TaskService {
                 StatusUtil.WAITING
         );
 
-        GeneralTaskDSResponseModel createdTask = taskDS.createTask(dsRequest);
+        TaskServiceResponseModel createdTask = taskDS.createTask(dsRequest);
 
         return taskPresenter.prepareSuccessView(createdTask);
     }
 
+    /**
+     * Обновляет существующую задачу по указанному идентификатору задачи.
+     *
+     * @param taskId идентификатор задачи, которую нужно обновить
+     * @param dto объект {@link TaskDBOToUpdateTaskByTaskId}, содержащий обновленные данные задачи
+     * @param bindingResult объект {@link BindingResult}, содержащий любые ошибки валидации
+     * @return объект {@link TaskServiceResponseModel}, представляющий обновленную задачу
+     * @throws TaskNotFoundException если задача, автор или исполнитель не найдены
+     * @throws TaskBadRequestException если входные данные недействительны
+     * @throws TaskForbiddenException если аутентифицированный пользователь не авторизован на обновление задачи
+     */
     @Override
-    public GeneralTaskDSResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto, BindingResult bindingResult) {
+    public TaskServiceResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto, BindingResult bindingResult) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -160,13 +180,18 @@ public class TaskServiceImpl implements TaskService {
                 .findByStatus(dto.getStatus().toLowerCase())
                 .isEmpty()) throw taskPresenter.prepareNotFoundView("Статус не найден");
 
-        GeneralTaskDSResponseModel updatedTask = taskDS.updateTaskById(taskId, dto);
+        TaskServiceResponseModel updatedTask = taskDS.updateTaskById(taskId, dto);
 
         return taskPresenter.prepareSuccessView(updatedTask);
     }
 
+    /**
+     * Возвращает список всех задач, созданных текущим аутентифицированным пользователем.
+     *
+     * @return список объектов {@link TaskServiceResponseModel}, представляющих найденные задачи
+     */
     @Override
-    public List<GeneralTaskDSResponseModel> getAllTasksFromAuthor() {
+    public List<TaskServiceResponseModel> getAllTasksFromAuthor() {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -174,13 +199,21 @@ public class TaskServiceImpl implements TaskService {
         MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
         Integer authorId = myUserDetails.getId();
 
-        List<GeneralTaskDSResponseModel> foundTasks = taskDS.getAllTasksByAuthorId(authorId);
+        List<TaskServiceResponseModel> foundTasks = taskDS.getAllTasksByAuthorId(authorId);
 
         return taskPresenter.prepareSuccessView(foundTasks);
     }
-    
+
+    /**
+     * Возвращает задачу по указанному идентификатору задачи, если она принадлежит текущему аутентифицированному пользователю.
+     *
+     * @param taskId идентификатор задачи, которую нужно найти
+     * @return объект {@link TaskServiceResponseModel}, представляющий найденную задачу
+     * @throws TaskNotFoundException если задача не найдена
+     * @throws TaskBadRequestException если у аутентифицированного пользователя нет задачи с указанным идентификатором
+     */
     @Override
-    public GeneralTaskDSResponseModel getTaskByTaskId(Integer taskId) {
+    public TaskServiceResponseModel getTaskByTaskId(Integer taskId) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -197,11 +230,18 @@ public class TaskServiceImpl implements TaskService {
                 .getAuthorId()
                 .equals(accountId)) throw taskPresenter.prepareBadRequestView("У Вас нет такой задачи");
 
-        GeneralTaskDSResponseModel foundTask = taskDS.getTaskByTaskId(taskId);
+        TaskServiceResponseModel foundTask = taskDS.getTaskByTaskId(taskId);
 
         return taskPresenter.prepareSuccessView(foundTask);
     }
 
+    /**
+     * Удаляет существующую задачу по указанному идентификатору задачи, если она принадлежит текущему аутентифицированному пользователю.
+     *
+     * @param taskId идентификатор задачи, которую нужно удалить
+     * @throws TaskNotFoundException если задача не найдена
+     * @throws TaskForbiddenException если аутентифицированный пользователь не авторизован на удаление задачи
+     */
     @Override
     public void deleteTaskByTaskId(Integer taskId) {
         Authentication authentication = SecurityContextHolder
@@ -219,6 +259,7 @@ public class TaskServiceImpl implements TaskService {
             if (!taskEntity
                     .getAuthorId()
                     .equals(accountId)) throw new TaskForbiddenException("Вы не можете удалить чужую задачу");
+
         } catch (TaskForbiddenException taskForbiddenException) {
             throw taskPresenter.prepareForbiddenView(taskForbiddenException.getMessage());
         } catch (TaskNotFoundException taskNotFoundException) {
@@ -228,8 +269,19 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.delete(taskEntity);
     }
 
+    /**
+     * Обновляет статус существующей задачи по указанному идентификатору задачи, если она принадлежит текущему аутентифицированному пользователю.
+     *
+     * @param taskId идентификатор задачи, статус которой нужно обновить
+     * @param dto объект {@link StatusDBO} с новым статусом задачи
+     * @param bindingResult объект {@link BindingResult} для обработки ошибок валидации входных данных
+     * @return объект {@link TaskServiceResponseModel}, представляющий задачу с обновленным статусом
+     * @throws TaskNotFoundException если задача не найдена
+     * @throws TaskForbiddenException если аутентифицированный пользователь не авторизован на обновление статуса задачи
+     * @throws TaskBadRequestException если входные данные в {@link StatusDBO} некорректны
+     */
     @Override
-    public GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForAuthor(Integer taskId, StatusDBO dto, BindingResult bindingResult) {
+    public TaskServiceResponseModel updateStatusOfTaskByTaskIdForAuthor(Integer taskId, StatusDBO dto, BindingResult bindingResult) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -268,13 +320,23 @@ public class TaskServiceImpl implements TaskService {
         taskEntity.updateStatus(statusEntity);
         taskRepository.save(taskEntity);
 
-        GeneralTaskDSResponseModel taskWithUpdatedStatus = dsResponseFactory.createGeneralResponse(taskEntity);
+        TaskServiceResponseModel taskWithUpdatedStatus = serviceResponseFactory.createGeneralResponse(taskEntity);
 
         return taskPresenter.prepareSuccessView(taskWithUpdatedStatus);
     }
 
+    /**
+     * Обновляет исполнителя существующей задачи по указанному идентификатору задачи, если текущий аутентифицированный пользователь является автором этой задачи.
+     *
+     * @param taskId идентификатор задачи, исполнителя которой нужно обновить
+     * @param executorId идентификатор аккаунта нового исполнителя задачи
+     * @return объект {@link TaskServiceResponseModel}, представляющий задачу с обновленным исполнителем
+     * @throws TaskNotFoundException если задача или новый исполнитель не найдены
+     * @throws TaskForbiddenException если аутентифицированный пользователь не является автором задачи
+     * @throws TaskBadRequestException если указанный аккаунт не имеет роли исполнителя
+     */
     @Override
-    public GeneralTaskDSResponseModel updateExecutorOfTaskByTaskId(Integer taskId, Integer executorId) {
+    public TaskServiceResponseModel updateExecutorOfTaskByTaskId(Integer taskId, Integer executorId) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -312,13 +374,24 @@ public class TaskServiceImpl implements TaskService {
         taskEntityToUpdateExecutor.updateExecutor(executorEntity);
         taskRepository.save(taskEntityToUpdateExecutor);
 
-        GeneralTaskDSResponseModel updatedTask = dsResponseFactory.createGeneralResponse(taskEntityToUpdateExecutor);
+        TaskServiceResponseModel updatedTask = serviceResponseFactory.createGeneralResponse(taskEntityToUpdateExecutor);
 
         return taskPresenter.prepareSuccessView(updatedTask);
     }
 
+    /**
+     * Обновляет статус существующей задачи по указанному идентификатору задачи, если текущий аутентифицированный пользователь является исполнителем этой задачи.
+     *
+     * @param taskId идентификатор задачи, статус которой нужно обновить
+     * @param dto объект {@link StatusDBO} с новым статусом задачи
+     * @param bindingResult объект {@link BindingResult} для обработки ошибок валидации входных данных
+     * @return объект {@link TaskServiceResponseModel}, представляющий задачу с обновленным статусом
+     * @throws TaskNotFoundException если задача или новый статус не найдены
+     * @throws TaskForbiddenException если аутентифицированный пользователь не является исполнителем задачи
+     * @throws TaskBadRequestException если входные данные в {@link StatusDBO} некорректны
+     */
     @Override
-    public GeneralTaskDSResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto, BindingResult bindingResult) {
+    public TaskServiceResponseModel updateStatusOfTaskByTaskIdForExecutor(Integer taskId, StatusDBO dto, BindingResult bindingResult) {
         Authentication authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
@@ -360,13 +433,22 @@ public class TaskServiceImpl implements TaskService {
         taskEntityToUpdateStatus.updateStatus(statusEntity);
         taskRepository.save(taskEntityToUpdateStatus);
 
-        GeneralTaskDSResponseModel updatedTask = dsResponseFactory.createGeneralResponse(taskEntityToUpdateStatus);
+        TaskServiceResponseModel updatedTask = serviceResponseFactory.createGeneralResponse(taskEntityToUpdateStatus);
 
         return taskPresenter.prepareSuccessView(updatedTask);
     }
 
+    /**
+     * Получает список задач, связанных с указанным идентификатором аккаунта, и отфильтрованных по статусу и приоритету.
+     *
+     * @param accountId идентификатор аккаунта, для которого необходимо получить список задач
+     * @param status фильтр по статусу задачи (необязательный параметр)
+     * @param priority фильтр по приоритету задачи (необязательный параметр)
+     * @return список объектов {@link TaskServiceResponseModel}, представляющих задачи, соответствующие указанным фильтрам
+     * @throws TaskNotFoundException если аккаунт с указанным идентификатором не найден
+     */
     @Override
-    public List<GeneralTaskDSResponseModel> getTasksByAccountIdAndFilters(Integer accountId, String status, String priority) {
+    public List<TaskServiceResponseModel> getTasksByAccountIdAndFilters(Integer accountId, String status, String priority) {
         AccountEntity accountEntity;
 
         try {
@@ -378,13 +460,13 @@ public class TaskServiceImpl implements TaskService {
             throw taskPresenter.prepareNotFoundView(taskNotFoundException.getMessage());
         }
 
-        List<GeneralTaskDSResponseModel> foundTasks = taskRepository
+        List<TaskServiceResponseModel> foundTasks = taskRepository
                 .findTasksByAccountIdAndFilters(
                         accountEntity.getAccountId(),
                         status.toLowerCase(),
                         priority.toLowerCase())
                 .stream()
-                .map(dsResponseFactory::createGeneralResponse)
+                .map(serviceResponseFactory::createGeneralResponse)
                 .toList();
 
         return taskPresenter.prepareSuccessView(foundTasks);

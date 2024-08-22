@@ -1,8 +1,8 @@
-package TaskManagementSystem.dto.dataStoreResponse;
+package TaskManagementSystem.dto.serviceResponse;
 
 import java.util.Objects;
 
-public class GeneralTaskDSResponseModel {
+public class TaskServiceResponseModel {
     private Integer taskId;
     private String title;
     private String description;
@@ -12,9 +12,9 @@ public class GeneralTaskDSResponseModel {
     private String executor;
     private String comment;
 
-    public GeneralTaskDSResponseModel(){}
+    public TaskServiceResponseModel(){}
 
-    public GeneralTaskDSResponseModel(Integer taskId, String title, String description, String status, String priority, String author, String executor, String comment) {
+    public TaskServiceResponseModel(Integer taskId, String title, String description, String status, String priority, String author, String executor, String comment) {
         this.taskId = taskId;
         this.title = title;
         this.description = description;
@@ -57,7 +57,7 @@ public class GeneralTaskDSResponseModel {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        GeneralTaskDSResponseModel that = (GeneralTaskDSResponseModel) o;
+        TaskServiceResponseModel that = (TaskServiceResponseModel) o;
         return Objects.equals(taskId, that.taskId) &&
                 Objects.equals(title, that.title) &&
                 Objects.equals(status, that.status) &&

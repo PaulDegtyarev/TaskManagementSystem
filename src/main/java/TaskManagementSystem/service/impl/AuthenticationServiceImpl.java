@@ -1,7 +1,7 @@
 package TaskManagementSystem.service.impl;
 
 import TaskManagementSystem.dataStore.AuthenticationDS;
-import TaskManagementSystem.dto.dataStoreResponse.RegistrationDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.RegistrationServiceResponseModel;
 import TaskManagementSystem.dto.dbo.RegistrationDBO;
 import TaskManagementSystem.presenter.AuthenticationPresenter;
 import TaskManagementSystem.repository.AccountRepository;
@@ -28,7 +28,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public RegistrationDSResponseModel registration(RegistrationDBO dto, BindingResult bindingResult) {
+    public RegistrationServiceResponseModel registration(RegistrationDBO dto, BindingResult bindingResult) {
         if (!isAnonymousUser()) {throw authenticationPresenter.prepareForbiddenView("Вы уже авторизованы");}
 
         if (accountRepository.existsByEmail(dto.getEmail())) {throw authenticationPresenter.prepareConflictView("Email занят");}
@@ -37,9 +37,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         RegistrationDBO dtoWithHashedPassword = hashPassword(dto);
 
-        RegistrationDSResponseModel registeredAccount = authenticationDS.registration(dtoWithHashedPassword);
+        RegistrationServiceResponseModel registeredAccount = authenticationDS.registration(dtoWithHashedPassword);
 
-        RegistrationDSResponseModel formatedResponse = formatResponse(registeredAccount);
+        RegistrationServiceResponseModel formatedResponse = formatResponse(registeredAccount);
 
         return authenticationPresenter.prepareSuccessView(formatedResponse);
     }
@@ -75,7 +75,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return dto;
     }
 
-    private RegistrationDSResponseModel formatResponse(RegistrationDSResponseModel registeredAccount) {
+    private RegistrationServiceResponseModel formatResponse(RegistrationServiceResponseModel registeredAccount) {
         if (registeredAccount.getRole().equals(RoleUtil.EXECUTOR_En)) {
             registeredAccount.setRole("Исполнитель");
         }

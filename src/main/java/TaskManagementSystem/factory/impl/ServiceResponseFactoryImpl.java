@@ -1,15 +1,15 @@
 package TaskManagementSystem.factory.impl;
 
-import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.TaskServiceResponseModel;
 import TaskManagementSystem.entity.TaskEntity;
-import TaskManagementSystem.factory.DSResponseFactory;
+import TaskManagementSystem.factory.ServiceResponseFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DSResponseFactoryImpl implements DSResponseFactory {
+public class ServiceResponseFactoryImpl implements ServiceResponseFactory {
     @Override
-    public GeneralTaskDSResponseModel createGeneralResponse(TaskEntity taskEntity) {
-        return new GeneralTaskDSResponseModel(
+    public TaskServiceResponseModel createGeneralResponse(TaskEntity taskEntity) {
+        return new TaskServiceResponseModel(
                 taskEntity.getTaskId(),
                 taskEntity.getTitle(),
                 taskEntity.getDescription(),

@@ -3,7 +3,7 @@ package TaskManagementSystem.service;
 import TaskManagementSystem.config.MyUserDetails;
 import TaskManagementSystem.dataStore.impl.TaskDSImpl;
 import TaskManagementSystem.dto.dSRequest.TaskDSRequestModel;
-import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.TaskServiceResponseModel;
 import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
 import TaskManagementSystem.dto.dbo.StatusDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
@@ -11,7 +11,7 @@ import TaskManagementSystem.entity.*;
 import TaskManagementSystem.exception.task.TaskBadRequestException;
 import TaskManagementSystem.exception.task.TaskForbiddenException;
 import TaskManagementSystem.exception.task.TaskNotFoundException;
-import TaskManagementSystem.factory.impl.DSResponseFactoryImpl;
+import TaskManagementSystem.factory.impl.ServiceResponseFactoryImpl;
 import TaskManagementSystem.presenter.impl.TaskFormatter;
 import TaskManagementSystem.repository.AccountRepository;
 import TaskManagementSystem.repository.PriorityRepository;
@@ -58,14 +58,14 @@ public class TaskServiceImplTest {
     private PriorityRepository priorityRepository;
 
     @Mock
-    private DSResponseFactoryImpl dsResponseFactory;
+    private ServiceResponseFactoryImpl dsResponseFactory;
 
     @Mock
     private TaskDSImpl taskDS;
 
     private BindingResult bindingResult;
     private GeneralTaskDBO dto;
-    private GeneralTaskDSResponseModel expectedResponse;
+    private TaskServiceResponseModel expectedResponse;
     private AccountEntity authorEntity;
     private AccountEntity executorEntity;
     private TaskEntity taskEntity;
@@ -149,7 +149,7 @@ public class TaskServiceImplTest {
                 dboToUpdateTaskByTaskId.getStatus()
         );
 
-        expectedResponse = new GeneralTaskDSResponseModel(
+        expectedResponse = new TaskServiceResponseModel(
                 2,
                 dto.getTitle(),
                 dto.getDescription(),
@@ -201,7 +201,7 @@ public class TaskServiceImplTest {
         when(taskDS.createTask(any(TaskDSRequestModel.class))).thenReturn(expectedResponse);
         when(taskService.createTask(dto, bindingResult)).thenReturn(expectedResponse);
 
-        GeneralTaskDSResponseModel actualResponse = taskService.createTask(dto, bindingResult);
+        TaskServiceResponseModel actualResponse = taskService.createTask(dto, bindingResult);
 
         Assertions.assertEquals(expectedResponse, actualResponse);
         verify(taskPresenter).prepareSuccessView(expectedResponse);
@@ -362,7 +362,7 @@ public class TaskServiceImplTest {
 
         when(taskService.updateTaskById(taskId, dboToUpdateTaskByTaskId, bindingResult)).thenReturn(expectedResponse);
 
-        GeneralTaskDSResponseModel actualResponse = taskService.updateTaskById(taskId, dboToUpdateTaskByTaskId, bindingResult);
+        TaskServiceResponseModel actualResponse = taskService.updateTaskById(taskId, dboToUpdateTaskByTaskId, bindingResult);
 
         Assertions.assertEquals(expectedResponse, actualResponse);
         verify(taskPresenter).prepareSuccessView(expectedResponse);
@@ -566,10 +566,10 @@ public class TaskServiceImplTest {
     @Test
     @DisplayName("Успешный тест просмотра всех своих задач")
     void getAllTasksFromAuthorSuccess() {
-        List<GeneralTaskDSResponseModel> expectedResponse = List.of(
-                new GeneralTaskDSResponseModel(),
-                new GeneralTaskDSResponseModel(),
-                new GeneralTaskDSResponseModel()
+        List<TaskServiceResponseModel> expectedResponse = List.of(
+                new TaskServiceResponseModel(),
+                new TaskServiceResponseModel(),
+                new TaskServiceResponseModel()
         );
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -578,7 +578,7 @@ public class TaskServiceImplTest {
         when(taskDS.getAllTasksByAuthorId(accountId)).thenReturn(expectedResponse);
         when(taskPresenter.prepareSuccessView(expectedResponse)).thenReturn(expectedResponse);
 
-        List<GeneralTaskDSResponseModel> actualResponse = taskService.getAllTasksFromAuthor();
+        List<TaskServiceResponseModel> actualResponse = taskService.getAllTasksFromAuthor();
 
         Assertions.assertEquals(expectedResponse, actualResponse);
         verify(taskPresenter).prepareSuccessView(expectedResponse);
@@ -595,7 +595,7 @@ public class TaskServiceImplTest {
         when(taskDS.getTaskByTaskId(taskId)).thenReturn(expectedResponse);
         when(taskPresenter.prepareSuccessView(expectedResponse)).thenReturn(expectedResponse);
 
-        GeneralTaskDSResponseModel actualResponse = taskService.getTaskByTaskId(taskId);
+        TaskServiceResponseModel actualResponse = taskService.getTaskByTaskId(taskId);
 
         Assertions.assertEquals(expectedResponse, actualResponse);
 
@@ -710,7 +710,7 @@ public class TaskServiceImplTest {
         when(dsResponseFactory.createGeneralResponse(taskEntity)).thenReturn(expectedResponse);
         when(taskPresenter.prepareSuccessView(expectedResponse)).thenReturn(expectedResponse);
 
-        GeneralTaskDSResponseModel actualResponse = taskService.updateStatusOfTaskByTaskIdForAuthor(taskId, statusDBO, bindingResult);
+        TaskServiceResponseModel actualResponse = taskService.updateStatusOfTaskByTaskIdForAuthor(taskId, statusDBO, bindingResult);
 
         Assertions.assertEquals(expectedResponse, actualResponse);
 
@@ -820,7 +820,7 @@ public class TaskServiceImplTest {
         when(dsResponseFactory.createGeneralResponse(taskEntity)).thenReturn(expectedResponse);
         when(taskPresenter.prepareSuccessView(expectedResponse)).thenReturn(expectedResponse);
 
-        GeneralTaskDSResponseModel actualResponse = taskService.updateExecutorOfTaskByTaskId(taskId, executorId);
+        TaskServiceResponseModel actualResponse = taskService.updateExecutorOfTaskByTaskId(taskId, executorId);
 
         Assertions.assertEquals(expectedResponse, actualResponse);
 
@@ -927,7 +927,7 @@ public class TaskServiceImplTest {
         when(dsResponseFactory.createGeneralResponse(taskEntity)).thenReturn(expectedResponse);
         when(taskPresenter.prepareSuccessView(expectedResponse)).thenReturn(expectedResponse);
 
-        GeneralTaskDSResponseModel actualResponse = taskService.updateStatusOfTaskByTaskIdForExecutor(taskId, statusDBO, bindingResult);
+        TaskServiceResponseModel actualResponse = taskService.updateStatusOfTaskByTaskIdForExecutor(taskId, statusDBO, bindingResult);
 
         Assertions.assertEquals(expectedResponse, actualResponse);
 
@@ -1027,7 +1027,7 @@ public class TaskServiceImplTest {
         when(dsResponseFactory.createGeneralResponse(taskEntity)).thenReturn(expectedResponse);
         when(taskPresenter.prepareSuccessView(List.of(expectedResponse))).thenReturn(List.of(expectedResponse));
 
-        List<GeneralTaskDSResponseModel> actualResponse = taskService.getTasksByAccountIdAndFilters(accountId, status.toLowerCase(), priority.toLowerCase());
+        List<TaskServiceResponseModel> actualResponse = taskService.getTasksByAccountIdAndFilters(accountId, status.toLowerCase(), priority.toLowerCase());
 
         Assertions.assertEquals(List.of(expectedResponse), actualResponse);
 

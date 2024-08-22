@@ -1,8 +1,11 @@
 package TaskManagementSystem.controller;
 
-import TaskManagementSystem.dto.dataStoreResponse.RegistrationDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.RegistrationServiceResponseModel;
 import TaskManagementSystem.dto.dbo.RegistrationDBO;
 import TaskManagementSystem.service.AuthenticationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,8 +34,13 @@ public class AuthenticationController {
     @PostMapping("/registration")
     @Async
     @Transactional
-    public ResponseEntity<RegistrationDSResponseModel> registration(
-            @RequestBody @Valid RegistrationDBO dto,
+    @Operation(
+            summary = "Регистрация нового пользователя",
+            description = "Позволяет зарегистрировать нового пользователя"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<RegistrationServiceResponseModel> registration(
+            @RequestBody @Valid @Parameter(description = "Request Body запроса с информацией о новом пользователе", required = true) RegistrationDBO dto,
             BindingResult bindingResult) {
         return new ResponseEntity<>(authenticationService.registration(dto, bindingResult), HttpStatus.CREATED);
     }

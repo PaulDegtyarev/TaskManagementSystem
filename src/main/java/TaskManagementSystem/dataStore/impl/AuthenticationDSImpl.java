@@ -1,7 +1,7 @@
 package TaskManagementSystem.dataStore.impl;
 
 import TaskManagementSystem.dataStore.AuthenticationDS;
-import TaskManagementSystem.dto.dataStoreResponse.RegistrationDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.RegistrationServiceResponseModel;
 import TaskManagementSystem.dto.dbo.RegistrationDBO;
 import TaskManagementSystem.entity.AccountEntity;
 import TaskManagementSystem.entity.RoleEntity;
@@ -22,7 +22,7 @@ public class AuthenticationDSImpl implements AuthenticationDS {
     }
 
     @Override
-    public RegistrationDSResponseModel registration(RegistrationDBO dto) {
+    public RegistrationServiceResponseModel registration(RegistrationDBO dto) {
         RoleEntity roleEntity = roleRepository.findByRole(dto.getRole());
 
         AccountEntity newAccount = new AccountEntity(
@@ -36,7 +36,7 @@ public class AuthenticationDSImpl implements AuthenticationDS {
 
         accountRepository.save(newAccount);
 
-        return new RegistrationDSResponseModel(
+        return new RegistrationServiceResponseModel(
                 newAccount.getAccountId(),
                 newAccount.getEmail(),
                 newAccount.getFirstname(),

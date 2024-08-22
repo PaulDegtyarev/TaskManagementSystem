@@ -1,13 +1,13 @@
-package TaskManagementSystem.dto.dataStoreResponse;
+package TaskManagementSystem.dto.serviceResponse;
 
-public class RegistrationDSResponseModel {
+public class RegistrationServiceResponseModel {
     private Integer accountId;
     private String email;
     private String firstname;
     private String lastname;
     private String role;
 
-    public RegistrationDSResponseModel(Integer accountId, String email, String firstname, String lastname, String role) {
+    public RegistrationServiceResponseModel(Integer accountId, String email, String firstname, String lastname, String role) {
         this.accountId = accountId;
         this.email = email;
         this.firstname = firstname;

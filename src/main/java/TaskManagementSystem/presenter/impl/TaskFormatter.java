@@ -1,6 +1,6 @@
 package TaskManagementSystem.presenter.impl;
 
-import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.TaskServiceResponseModel;
 import TaskManagementSystem.exception.task.TaskBadRequestException;
 import TaskManagementSystem.exception.task.TaskForbiddenException;
 import TaskManagementSystem.exception.task.TaskNotFoundException;
@@ -21,8 +21,8 @@ public class TaskFormatter implements TaskPresenter {
     public TaskForbiddenException prepareForbiddenView(String message) {throw new TaskForbiddenException(message);}
 
     @Override
-    public GeneralTaskDSResponseModel prepareSuccessView(GeneralTaskDSResponseModel response) {return response;}
+    public TaskServiceResponseModel prepareSuccessView(TaskServiceResponseModel response) {return response;}
 
     @Override
-    public List<GeneralTaskDSResponseModel> prepareSuccessView(List<GeneralTaskDSResponseModel> response) {return response;}
+    public List<TaskServiceResponseModel> prepareSuccessView(List<TaskServiceResponseModel> response) {return response;}
 }

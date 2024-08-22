@@ -1,8 +1,8 @@
 package TaskManagementSystem.dataStore;
 
-import TaskManagementSystem.dto.dataStoreResponse.RegistrationDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.RegistrationServiceResponseModel;
 import TaskManagementSystem.dto.dbo.RegistrationDBO;
 
 public interface AuthenticationDS {
-    RegistrationDSResponseModel registration(RegistrationDBO dto);
+    RegistrationServiceResponseModel registration(RegistrationDBO dto);
 }

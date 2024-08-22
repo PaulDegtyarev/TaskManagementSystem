@@ -2,13 +2,13 @@ package TaskManagementSystem.dataStore.impl;
 
 import TaskManagementSystem.dataStore.TaskDS;
 import TaskManagementSystem.dto.dSRequest.TaskDSRequestModel;
-import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.TaskServiceResponseModel;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.entity.AccountEntity;
 import TaskManagementSystem.entity.PriorityEntity;
 import TaskManagementSystem.entity.StatusEntity;
 import TaskManagementSystem.entity.TaskEntity;
-import TaskManagementSystem.factory.DSResponseFactory;
+import TaskManagementSystem.factory.ServiceResponseFactory;
 import TaskManagementSystem.repository.AccountRepository;
 import TaskManagementSystem.repository.PriorityRepository;
 import TaskManagementSystem.repository.StatusRepository;
@@ -24,19 +24,19 @@ public class TaskDSImpl implements TaskDS {
     private StatusRepository statusRepository;
     private PriorityRepository priorityRepository;
     private TaskRepository taskRepository;
-    private DSResponseFactory dsResponseFactory;
+    private ServiceResponseFactory serviceResponseFactory;
 
     @Autowired
-    public TaskDSImpl(AccountRepository accountRepository, StatusRepository statusRepository, PriorityRepository priorityRepository, TaskRepository taskRepository, DSResponseFactory dsResponseFactory) {
+    public TaskDSImpl(AccountRepository accountRepository, StatusRepository statusRepository, PriorityRepository priorityRepository, TaskRepository taskRepository, ServiceResponseFactory serviceResponseFactory) {
         this.accountRepository = accountRepository;
         this.statusRepository = statusRepository;
         this.priorityRepository = priorityRepository;
         this.taskRepository = taskRepository;
-        this.dsResponseFactory = dsResponseFactory;
+        this.serviceResponseFactory = serviceResponseFactory;
     }
 
     @Override
-    public GeneralTaskDSResponseModel createTask(TaskDSRequestModel dsRequest) {
+    public TaskServiceResponseModel createTask(TaskDSRequestModel dsRequest) {
         AccountEntity authorEntity = accountRepository
                 .findById(dsRequest.getAuthorId())
                 .get();
@@ -67,11 +67,11 @@ public class TaskDSImpl implements TaskDS {
 
         taskRepository.save(newTask);
 
-        return dsResponseFactory.createGeneralResponse(newTask);
+        return serviceResponseFactory.createGeneralResponse(newTask);
     }
 
     @Override
-    public GeneralTaskDSResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto) {
+    public TaskServiceResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto) {
         TaskEntity foundTask = taskRepository.findById(taskId).get();
 
         AccountEntity authorEntity = accountRepository
@@ -93,25 +93,25 @@ public class TaskDSImpl implements TaskDS {
         foundTask.updateTaskEntity(dto, authorEntity, executorEntity, priorityEntity, statusEntity);
         taskRepository.save(foundTask);
 
-        return dsResponseFactory.createGeneralResponse(foundTask);
+        return serviceResponseFactory.createGeneralResponse(foundTask);
     }
 
     @Override
-    public List<GeneralTaskDSResponseModel> getAllTasksByAuthorId(Integer authorId) {
+    public List<TaskServiceResponseModel> getAllTasksByAuthorId(Integer authorId) {
         return accountRepository
                 .findById(authorId)
                 .get()
                 .getTaskEntitiesByAuthor()
                 .stream()
-                .map(taskEntity -> dsResponseFactory.createGeneralResponse(taskEntity))
+                .map(taskEntity -> serviceResponseFactory.createGeneralResponse(taskEntity))
                 .toList();
     }
 
     @Override
-    public GeneralTaskDSResponseModel getTaskByTaskId(Integer taskId) {
+    public TaskServiceResponseModel getTaskByTaskId(Integer taskId) {
         return taskRepository
                 .findById(taskId)
-                .map(dsResponseFactory::createGeneralResponse)
+                .map(serviceResponseFactory::createGeneralResponse)
                 .get();
     }
 }

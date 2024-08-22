@@ -1,8 +1,7 @@
 package TaskManagementSystem.dataStore;
 
 import TaskManagementSystem.dto.dSRequest.TaskDSRequestModel;
-import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
-import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
+import TaskManagementSystem.dto.serviceResponse.TaskServiceResponseModel;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 
 import java.util.List;
@@ -10,12 +9,12 @@ import java.util.List;
 public interface TaskDS {
 
 
-    GeneralTaskDSResponseModel createTask(TaskDSRequestModel dsRequest);
+    TaskServiceResponseModel createTask(TaskDSRequestModel dsRequest);
 
 
-    GeneralTaskDSResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto);
+    TaskServiceResponseModel updateTaskById(Integer taskId, TaskDBOToUpdateTaskByTaskId dto);
 
-    List<GeneralTaskDSResponseModel> getAllTasksByAuthorId(Integer authorId);
+    List<TaskServiceResponseModel> getAllTasksByAuthorId(Integer authorId);
 
-    GeneralTaskDSResponseModel getTaskByTaskId(Integer taskId);
+    TaskServiceResponseModel getTaskByTaskId(Integer taskId);
 }

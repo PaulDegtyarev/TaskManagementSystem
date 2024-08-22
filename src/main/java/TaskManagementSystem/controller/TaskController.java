@@ -1,10 +1,14 @@
 package TaskManagementSystem.controller;
 
-import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.TaskServiceResponseModel;
 import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
 import TaskManagementSystem.dto.dbo.StatusDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import TaskManagementSystem.service.TaskService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -15,13 +19,14 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/task")
+@Tag(name = "Контроллер задач", description = "Контроллер, отвечающий за работу с задачами")
 public class TaskController {
     private TaskService taskService;
 
@@ -34,8 +39,13 @@ public class TaskController {
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
     @Transactional
-    public ResponseEntity<GeneralTaskDSResponseModel> createTask(
-            @RequestBody @Valid GeneralTaskDBO dto,
+    @Operation(
+            summary = "Добавление задачи",
+            description = "Позволяет автору добавить новую задачу"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<TaskServiceResponseModel> createTask(
+            @RequestBody @Valid @Parameter(description = "Request Body запроса с информацией о новой задаче", required = true) GeneralTaskDBO dto,
             BindingResult bindingResult
             ) {
         return new ResponseEntity<>(taskService.createTask(dto, bindingResult), HttpStatus.CREATED);
@@ -44,9 +54,14 @@ public class TaskController {
     @PutMapping(value = {"/me/", "/me/{taskId}"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
-    public ResponseEntity<GeneralTaskDSResponseModel> updateTaskByTaskId(
-            @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
-            @RequestBody @Valid TaskDBOToUpdateTaskByTaskId dto,
+    @Operation(
+            summary = "Обновление задачи",
+            description = "Позволяет автору обновить задачу"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<TaskServiceResponseModel> updateTaskByTaskId(
+            @PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для обновления", required = true) @NotNull @Min(1) Integer taskId,
+            @RequestBody @Valid @Parameter(description = "Request Body запроса с информацией для обновления задачи", required = true)TaskDBOToUpdateTaskByTaskId dto,
             BindingResult bindingResult
     ) {
         return new ResponseEntity<>(taskService.updateTaskById(taskId, dto, bindingResult), HttpStatus.OK);
@@ -55,30 +70,50 @@ public class TaskController {
     @GetMapping("/me")
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
-    public ResponseEntity<List<GeneralTaskDSResponseModel>> getMyAllTasks() {
+    @Operation(
+            summary = "Получение всех своих задач",
+            description = "Позволяет пользователю получить все свои задачи"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<List<TaskServiceResponseModel>> getMyAllTasks() {
         return new ResponseEntity<>(taskService.getAllTasksFromAuthor(), HttpStatus.OK);
     }
 
     @GetMapping(value = {"/me/", "/me/{taskId}"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
-    public ResponseEntity<GeneralTaskDSResponseModel> getMyTaskByTaskId(@PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId) {
+    @Operation(
+            summary = "Получение своей задачи по id задачи",
+            description = "Позволяет пользователю получить свою задачу по ее id"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<TaskServiceResponseModel> getMyTaskByTaskId(@PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для поиска", required = true) @NotNull @Min(1) Integer taskId) {
         return new ResponseEntity<>(taskService.getTaskByTaskId(taskId), HttpStatus.OK);
     }
 
     @DeleteMapping(value = {"/me/", "/me/{taskId}"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
-    public void deleteMyTaskByTaskId(@PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId) {
+    @Operation(
+            summary = "Удаление своей задачи по id задачи",
+            description = "Позволяет пользователю удалить свою задачу по ее id"
+    )
+    @SecurityRequirement(name = "JWT")
+    public void deleteMyTaskByTaskId(@PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для удаления", required = true) @NotNull @Min(1) Integer taskId) {
         taskService.deleteTaskByTaskId(taskId);
     }
 
     @PutMapping(value = {"/author/{taskId}/status", "/author/status"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
-    public ResponseEntity<GeneralTaskDSResponseModel> updateStatusOfTaskByTaskIdForAuthor(
-            @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
-            @RequestBody @Valid StatusDBO dto,
+    @Operation(
+            summary = "Обновление статуса своей задачи по id задачи",
+            description = "Позволяет пользователю обновить статус своей задачи по ее id"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<TaskServiceResponseModel> updateStatusOfTaskByTaskIdForAuthor(
+            @PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для обновления", required = true) @NotNull @Min(1) Integer taskId,
+            @RequestBody @Valid @Parameter(description = "Request Body с новым статусом", required = true) StatusDBO dto,
             BindingResult bindingResult
             ) {
         return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForAuthor(taskId, dto, bindingResult), HttpStatus.OK);
@@ -87,9 +122,14 @@ public class TaskController {
     @PutMapping(value = {"/{taskId}/executor/{executorId}", "/executor/{executorId}", "/{taskId}/executor/"})
     @PreAuthorize("hasRole('ROLE_AUTHOR')")
     @Async
-    public ResponseEntity<GeneralTaskDSResponseModel> updateExecutorOfTaskByTaskId(
-            @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
-            @PathVariable(value = "executorId", required = false) @NotNull @Min(1) Integer executorId
+    @Operation(
+            summary = "Обновление исполнителя своей задачи по id задачи",
+            description = "Позволяет пользователю обновить исполнителя своей задачи по ее id"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<TaskServiceResponseModel> updateExecutorOfTaskByTaskId(
+            @PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для обновления", required = true) @NotNull @Min(1) Integer taskId,
+            @PathVariable(value = "executorId", required = false) @Parameter(description = "Id исполнителя для обновления", required = true) @NotNull @Min(1) Integer executorId
     ) {
         return new ResponseEntity<>(taskService.updateExecutorOfTaskByTaskId(taskId, executorId), HttpStatus.OK);
     }
@@ -97,9 +137,14 @@ public class TaskController {
     @PutMapping(value = {"/executor/{taskId}/status", "/executor/status"})
     @PreAuthorize("hasRole('ROLE_EXECUTOR')")
     @Async
-    public ResponseEntity<GeneralTaskDSResponseModel> updateStatusOfTaskByTaskIdForExecutor(
-            @PathVariable(value = "taskId", required = false) @NotNull @Min(1) Integer taskId,
-            @RequestBody @Valid StatusDBO dto,
+    @Operation(
+            summary = "Обновление исполнителем статуса своей задачи по id задачи",
+            description = "Позволяет исполнителю обновить статус своей задачи по ее id"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<TaskServiceResponseModel> updateStatusOfTaskByTaskIdForExecutor(
+            @PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для обновления", required = true) @NotNull @Min(1) Integer taskId,
+            @RequestBody @Valid @Parameter(description = "Request Body с новым статусом", required = true) StatusDBO dto,
             BindingResult bindingResult
             ) {
         return new ResponseEntity<>(taskService.updateStatusOfTaskByTaskIdForExecutor(taskId, dto, bindingResult), HttpStatus.OK);
@@ -107,10 +152,15 @@ public class TaskController {
 
     @GetMapping("/{accountId}/search")
     @Async
-    public ResponseEntity<List<GeneralTaskDSResponseModel>> getTasksByAccountIdAndFilters(
-            @PathVariable(value = "accountId", required = false) @NotNull @Min(1) Integer accountId,
-            @RequestParam(value = "status", required = false, defaultValue = "") String status,
-            @RequestParam(value = "priority", required = false, defaultValue = "") String priority
+    @Operation(
+            summary = "Получение авторизованным пользователем задач по accountId и фильтрам",
+            description = "Позволяет авторизованному пользователю получить задачи по accountId и фильтрам"
+    )
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<List<TaskServiceResponseModel>> getTasksByAccountIdAndFilters(
+            @PathVariable(value = "accountId", required = false) @Parameter(description = "Id аккаунта для поиска", required = true) @NotNull @Min(1) Integer accountId,
+            @RequestParam(value = "status", required = false, defaultValue = "") @Parameter(description = "Статус для поиска") String status,
+            @RequestParam(value = "priority", required = false, defaultValue = "") @Parameter(description = "Приоритет для поиска") String priority
     ) {
         return new ResponseEntity<>(taskService.getTasksByAccountIdAndFilters(accountId, status, priority), HttpStatus.OK);
     }

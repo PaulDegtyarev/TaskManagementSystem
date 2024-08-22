@@ -2,7 +2,7 @@ package TaskManagementSystem.controller;
 
 import TaskManagementSystem.TaskManagementSystemApplication;
 import TaskManagementSystem.config.SecurityConfig;
-import TaskManagementSystem.dto.dataStoreResponse.GeneralTaskDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.TaskServiceResponseModel;
 import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
 import TaskManagementSystem.dto.dbo.StatusDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
@@ -65,7 +65,7 @@ public class TaskControllerTest {
     private BindingResult bindingResult;
     private AccountEntity executorEntity;
     private GeneralTaskDBO dto;
-    private GeneralTaskDSResponseModel expectedResponse;
+    private TaskServiceResponseModel expectedResponse;
     private Integer taskId;
     private TaskDBOToUpdateTaskByTaskId dboToUpdateTaskByTaskId;
     private StatusDBO statusDBO;
@@ -127,7 +127,7 @@ public class TaskControllerTest {
                 "Перед сдачей задачи напишите мне или позвоните"
         );
 
-        expectedResponse = new GeneralTaskDSResponseModel(
+        expectedResponse = new TaskServiceResponseModel(
                 taskId,
                 dto.getTitle(),
                 dto.getDescription(),
@@ -263,10 +263,10 @@ public class TaskControllerTest {
     @DisplayName("Успешный тест поиска всех задач у автора")
     @WithMockUser(roles = "AUTHOR")
     void getMyAllTasksSuccess() throws Exception {
-        List<GeneralTaskDSResponseModel> expectedResponse = List.of(
-                new GeneralTaskDSResponseModel(),
-                new GeneralTaskDSResponseModel(),
-                new GeneralTaskDSResponseModel()
+        List<TaskServiceResponseModel> expectedResponse = List.of(
+                new TaskServiceResponseModel(),
+                new TaskServiceResponseModel(),
+                new TaskServiceResponseModel()
         );
 
         when(taskService.getAllTasksFromAuthor()).thenReturn(expectedResponse);
@@ -635,7 +635,7 @@ public class TaskControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        List<GeneralTaskDSResponseModel> actualResponse = taskService.getTasksByAccountIdAndFilters(executorId, status.toLowerCase(), priority.toLowerCase());
+        List<TaskServiceResponseModel> actualResponse = taskService.getTasksByAccountIdAndFilters(executorId, status.toLowerCase(), priority.toLowerCase());
 
         Assertions.assertEquals(List.of(expectedResponse), actualResponse);
 

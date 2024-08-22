@@ -1,6 +1,6 @@
 package TaskManagementSystem.presenter.impl;
 
-import TaskManagementSystem.dto.dataStoreResponse.RegistrationDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.RegistrationServiceResponseModel;
 import TaskManagementSystem.exception.authentication.AuthenticationBadRequestException;
 import TaskManagementSystem.exception.authentication.AuthenticationConflictException;
 import TaskManagementSystem.exception.authentication.AuthenticationForbiddenException;
@@ -31,5 +31,5 @@ public class AuthenticationFormatter implements AuthenticationPresenter {
     }
 
     @Override
-    public RegistrationDSResponseModel prepareSuccessView(RegistrationDSResponseModel response) {return response;}
+    public RegistrationServiceResponseModel prepareSuccessView(RegistrationServiceResponseModel response) {return response;}
 }

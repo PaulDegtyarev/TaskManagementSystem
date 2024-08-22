@@ -1,6 +1,6 @@
 package TaskManagementSystem.presenter;
 
-import TaskManagementSystem.dto.dataStoreResponse.RegistrationDSResponseModel;
+import TaskManagementSystem.dto.serviceResponse.RegistrationServiceResponseModel;
 import TaskManagementSystem.exception.authentication.AuthenticationBadRequestException;
 import TaskManagementSystem.exception.authentication.AuthenticationConflictException;
 import TaskManagementSystem.exception.authentication.AuthenticationForbiddenException;
@@ -15,5 +15,5 @@ public interface AuthenticationPresenter {
 
     AuthenticationForbiddenException prepareForbiddenView(String message);
 
-    RegistrationDSResponseModel prepareSuccessView(RegistrationDSResponseModel response);
+    RegistrationServiceResponseModel prepareSuccessView(RegistrationServiceResponseModel response);
 }
