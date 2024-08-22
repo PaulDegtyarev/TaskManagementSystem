@@ -2,15 +2,16 @@ FROM openjdk:17-jdk-alpine
 
 WORKDIR /app
 
-COPY build.gradle ./
-COPY gradle /gradle
+COPY build.gradle /app/
+COPY gradle.properties /app/
+COPY settings.gradle /app/
+COPY src /app/src/
 
-RUN ./gradlew build -x test
+RUN gradle build --no-daemon
 
-COPY src /app/src
-
-RUN ./gradlew build -x test
+COPY build/libs/*.jar /target/
 
 EXPOSE 8080
-
-CMD ["java", "-jar", "build/libs/TaskManagementSystem-0.    0.1-SNAPSHOT.jar"]
+ENV POSTGRES database
+ADD /target/manager.jar manager.jar
+ENTRYPOINT exec java $JAVA_OPTS -jar manager.jar --spring.datasource.url=jdbc:postgresql://$POSTGRES:5432/sample

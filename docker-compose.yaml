@@ -4,8 +4,8 @@ services:
   database:
     image: postgres:latest
     container_name: database
-    volumes:
-      - var/lib/postgresql/data
+    ports:
+      - 5432:5432
     environment:
       - POSTGRES_DB=taskManagementSystem
       - POSTGRES_USER=admin
@@ -15,18 +15,21 @@ services:
 
   webapi:
     image: webapi
-    container_name: api 
+    container_name: api
     ports:
-      - "8080:8080"
+      - 8080:8080
     depends_on:
       - database
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/taskManagementSystem
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=password
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/taskManagementSystem
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=password
     networks:
       - backend
 
 networks:
   backend:
     name: backend-network
+
+volumes:
+  pgdata:
