@@ -1,17 +1,17 @@
+FROM gradle:8.8-jdk17-alpine AS BUILD_STAGE
+
+COPY --chown=gradle:gradle . /home/gradle
+
+RUN gradle build
+
+
 FROM openjdk:17-jdk-alpine
 
-WORKDIR /app
+ENV ARTIFACT_NAME=*.jar
+ENV APP_HOME=/app
 
-COPY build.gradle /app/
-COPY gradle.properties /app/
-COPY settings.gradle /app/
-COPY src /app/src/
+COPY --from=BUILD_STAGE /home/gradle/build/libs/$ARTIFACT_NAME $APP_HOME/
 
-RUN gradle build --no-daemon
+WORKDIR $APP_HOME
 
-COPY build/libs/*.jar /target/
-
-EXPOSE 8080
-ENV POSTGRES database
-ADD /target/manager.jar manager.jar
-ENTRYPOINT exec java $JAVA_OPTS -jar manager.jar --spring.datasource.url=jdbc:postgresql://$POSTGRES:5432/sample
+ENTRYPOINT exec java -jar ${ARTIFACT_NAME}

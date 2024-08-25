@@ -13,6 +13,15 @@ java {
 	}
 }
 
+jar {
+	manifest {
+		attributes(
+				'Main-Class': 'TaskManagementSystem.TaskManagementSystemApplication'
+		)
+	}
+	enabled = false
+}
+
 repositories {
 	mavenCentral()
 }
