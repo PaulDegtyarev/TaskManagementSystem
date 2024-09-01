@@ -1,6 +1,5 @@
 package TaskManagementSystem.entity;
 
-import TaskManagementSystem.dto.dbo.GeneralTaskDBO;
 import TaskManagementSystem.dto.dbo.TaskDBOToUpdateTaskByTaskId;
 import jakarta.persistence.*;
 

@@ -1,10 +1,15 @@
 package TaskManagementSystem.service.impl;
 
-import TaskManagementSystem.dataStore.AuthenticationDS;
 import TaskManagementSystem.dto.serviceResponse.RegistrationServiceResponseModel;
 import TaskManagementSystem.dto.dbo.RegistrationDBO;
+import TaskManagementSystem.entity.AccountEntity;
+import TaskManagementSystem.entity.RoleEntity;
+import TaskManagementSystem.exception.authentication.AuthenticationBadRequestException;
+import TaskManagementSystem.exception.authentication.AuthenticationConflictException;
+import TaskManagementSystem.exception.authentication.AuthenticationForbiddenException;
 import TaskManagementSystem.presenter.AuthenticationPresenter;
 import TaskManagementSystem.repository.AccountRepository;
+import TaskManagementSystem.repository.RoleRepository;
 import TaskManagementSystem.service.AuthenticationService;
 import TaskManagementSystem.util.RoleUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,28 +23,50 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private AuthenticationPresenter authenticationPresenter;
     private AccountRepository accountRepository;
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    private AuthenticationDS authenticationDS;
+    private RoleRepository roleRepository;
 
     @Autowired
-    public AuthenticationServiceImpl(AuthenticationPresenter authenticationPresenter, AccountRepository accountRepository, AuthenticationDS authenticationDS) {
+    public AuthenticationServiceImpl(AuthenticationPresenter authenticationPresenter, AccountRepository accountRepository, RoleRepository roleRepository) {
         this.authenticationPresenter = authenticationPresenter;
         this.accountRepository = accountRepository;
-        this.authenticationDS = authenticationDS;
+        this.roleRepository = roleRepository;
     }
 
     @Override
     public RegistrationServiceResponseModel registration(RegistrationDBO dto, BindingResult bindingResult) {
-        if (!isAnonymousUser()) {throw authenticationPresenter.prepareForbiddenView("Вы уже авторизованы");}
+        try {
+            if (!isAnonymousUser()) {throw new AuthenticationForbiddenException("Вы уже авторизованы");}
 
-        if (accountRepository.existsByEmail(dto.getEmail())) {throw authenticationPresenter.prepareConflictView("Email занят");}
+            if (accountRepository.existsByEmail(dto.getEmail())) {throw new AuthenticationConflictException("Email занят");}
 
-        checkData(dto, bindingResult);
+            if (bindingResult.hasErrors()) {throw new AuthenticationBadRequestException("Неверно введенны данные");}
 
-        RegistrationDBO dtoWithHashedPassword = hashPassword(dto);
+            checkRoleInData(dto);
 
-        RegistrationServiceResponseModel registeredAccount = authenticationDS.registration(dtoWithHashedPassword);
+        } catch (AuthenticationBadRequestException authenticationBadRequestException) {
+            throw authenticationPresenter.prepareBadRequestView(authenticationBadRequestException.getMessage());
+        } catch (AuthenticationForbiddenException authenticationForbiddenException) {
+            throw authenticationPresenter.prepareForbiddenView(authenticationForbiddenException.getMessage());
+        } catch (AuthenticationConflictException authenticationConflictException) {
+            throw authenticationPresenter.prepareConflictView(authenticationConflictException.getMessage());
+        }
 
-        RegistrationServiceResponseModel formatedResponse = formatResponse(registeredAccount);
+        hashPassword(dto);
+
+        RoleEntity roleEntity = roleRepository.findByRole(dto.getRole());
+
+        AccountEntity newAccount = new AccountEntity(
+                dto.getEmail(),
+                dto.getPassword(),
+                dto.getFirstName(),
+                dto.getLastName(),
+                roleEntity.getRoleId()
+        );
+        newAccount.setRoleEntity(roleEntity);
+
+        accountRepository.save(newAccount);
+
+        RegistrationServiceResponseModel formatedResponse = formatResponse(newAccount);
 
         return authenticationPresenter.prepareSuccessView(formatedResponse);
     }
@@ -51,39 +78,41 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .getPrincipal() == "anonymousUser";
     }
 
-    private void checkData(RegistrationDBO dto, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {throw authenticationPresenter.prepareBadRequestView("Неверно введенны данные");}
+    private void checkRoleInData(RegistrationDBO dto) {
+        if (dto.getRole().equalsIgnoreCase(RoleUtil.EXECUTOR_Ru)) {dto.setRole(RoleUtil.EXECUTOR_En);}
 
-        if (dto.getRole().equalsIgnoreCase(RoleUtil.EXECUTOR_Ru)) {
-            dto.setRole(RoleUtil.EXECUTOR_En);
-        }
+        else if (dto.getRole().equalsIgnoreCase(RoleUtil.AUTHOR_Ru)) {dto.setRole(RoleUtil.AUTHOR_En);}
 
-        else if (dto.getRole().equalsIgnoreCase(RoleUtil.AUTHOR_Ru)) {
-            dto.setRole(RoleUtil.AUTHOR_En);
-        }
-
-        else {
-            throw authenticationPresenter.prepareBadRequestView("Такой роли нет");
-        }
+        else {throw new AuthenticationBadRequestException("Такой роли нет");}
     }
 
-    private RegistrationDBO hashPassword(RegistrationDBO dto) {
+    private void hashPassword(RegistrationDBO dto) {
         String notHashedPassword = dto.getPassword();
 
-        dto.setPassword(encoder.encode(notHashedPassword));
+        String hashedPassword = encoder.encode(notHashedPassword);
 
-        return dto;
+        dto.setPassword(hashedPassword);
     }
 
-    private RegistrationServiceResponseModel formatResponse(RegistrationServiceResponseModel registeredAccount) {
-        if (registeredAccount.getRole().equals(RoleUtil.EXECUTOR_En)) {
-            registeredAccount.setRole("Исполнитель");
-        }
+    private RegistrationServiceResponseModel formatResponse(AccountEntity registeredAccount) {
+        String roleToAnswer = "";
 
-        else if (registeredAccount.getRole().equals(RoleUtil.AUTHOR_En)) {
-            registeredAccount.setRole("Автор");
-        }
+        if (registeredAccount
+                .getRoleEntity()
+                .getRole()
+                .equals(RoleUtil.EXECUTOR_En)) {roleToAnswer = "Исполнитель";}
 
-        return registeredAccount;
+        else if (registeredAccount
+                .getRoleEntity()
+                .getRole()
+                .equals(RoleUtil.AUTHOR_En)) {roleToAnswer = "Автор";}
+
+        return new RegistrationServiceResponseModel(
+                registeredAccount.getAccountId(),
+                registeredAccount.getEmail(),
+                registeredAccount.getFirstname(),
+                registeredAccount.getLastname(),
+                roleToAnswer
+        );
     }
 }

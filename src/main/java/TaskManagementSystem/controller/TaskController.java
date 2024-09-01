@@ -19,7 +19,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,6 +58,7 @@ public class TaskController {
             description = "Позволяет автору обновить задачу"
     )
     @SecurityRequirement(name = "JWT")
+    @Transactional
     public ResponseEntity<TaskServiceResponseModel> updateTaskByTaskId(
             @PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для обновления", required = true) @NotNull @Min(1) Integer taskId,
             @RequestBody @Valid @Parameter(description = "Request Body запроса с информацией для обновления задачи", required = true)TaskDBOToUpdateTaskByTaskId dto,
@@ -99,6 +99,7 @@ public class TaskController {
             description = "Позволяет пользователю удалить свою задачу по ее id"
     )
     @SecurityRequirement(name = "JWT")
+    @Transactional
     public void deleteMyTaskByTaskId(@PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для удаления", required = true) @NotNull @Min(1) Integer taskId) {
         taskService.deleteTaskByTaskId(taskId);
     }
@@ -111,6 +112,7 @@ public class TaskController {
             description = "Позволяет пользователю обновить статус своей задачи по ее id"
     )
     @SecurityRequirement(name = "JWT")
+    @Transactional
     public ResponseEntity<TaskServiceResponseModel> updateStatusOfTaskByTaskIdForAuthor(
             @PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для обновления", required = true) @NotNull @Min(1) Integer taskId,
             @RequestBody @Valid @Parameter(description = "Request Body с новым статусом", required = true) StatusDBO dto,
@@ -127,6 +129,7 @@ public class TaskController {
             description = "Позволяет пользователю обновить исполнителя своей задачи по ее id"
     )
     @SecurityRequirement(name = "JWT")
+    @Transactional
     public ResponseEntity<TaskServiceResponseModel> updateExecutorOfTaskByTaskId(
             @PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для обновления", required = true) @NotNull @Min(1) Integer taskId,
             @PathVariable(value = "executorId", required = false) @Parameter(description = "Id исполнителя для обновления", required = true) @NotNull @Min(1) Integer executorId
@@ -142,6 +145,7 @@ public class TaskController {
             description = "Позволяет исполнителю обновить статус своей задачи по ее id"
     )
     @SecurityRequirement(name = "JWT")
+    @Transactional
     public ResponseEntity<TaskServiceResponseModel> updateStatusOfTaskByTaskIdForExecutor(
             @PathVariable(value = "taskId", required = false) @Parameter(description = "Id задачи для обновления", required = true) @NotNull @Min(1) Integer taskId,
             @RequestBody @Valid @Parameter(description = "Request Body с новым статусом", required = true) StatusDBO dto,
