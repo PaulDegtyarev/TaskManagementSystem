@@ -13,19 +13,19 @@ services:
     networks:
       - backend
 
-  webapi:
-    build: .
-    container_name: api
-    ports:
-      - "8080:8080"
-    depends_on:
-      - database
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/taskManagementSystem
-      - SPRING_DATASOURCE_USERNAME=admin
-      - SPRING_DATASOURCE_PASSWORD=password
-    networks:
-      - backend
+#  webapi:
+#    build: .
+#    container_name: api
+#    ports:
+#      - "8080:8080"
+#    depends_on:
+#      - database
+#    environment:
+#      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/taskManagementSystem
+#      - SPRING_DATASOURCE_USERNAME=admin
+#      - SPRING_DATASOURCE_PASSWORD=password
+#    networks:
+#      - backend
 
 networks:
   backend:

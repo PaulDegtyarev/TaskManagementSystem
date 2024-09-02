@@ -11,37 +11,42 @@ import TaskManagementSystem.presenter.AuthenticationPresenter;
 import TaskManagementSystem.repository.AccountRepository;
 import TaskManagementSystem.repository.RoleRepository;
 import TaskManagementSystem.service.AuthenticationService;
-import TaskManagementSystem.util.RoleUtil;
+import TaskManagementSystem.service.HashService;
+import TaskManagementSystem.service.SecurityContextService;
+import TaskManagementSystem.util.RegistrationRoleHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
+    private SecurityContextService securityContextService;
     private AuthenticationPresenter authenticationPresenter;
     private AccountRepository accountRepository;
-    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private RegistrationRoleHelper registrationRoleHelper;
+    private HashService hashService;
     private RoleRepository roleRepository;
 
     @Autowired
-    public AuthenticationServiceImpl(AuthenticationPresenter authenticationPresenter, AccountRepository accountRepository, RoleRepository roleRepository) {
+    public AuthenticationServiceImpl(SecurityContextService securityContextService, AuthenticationPresenter authenticationPresenter, AccountRepository accountRepository, RegistrationRoleHelper registrationRoleHelper, HashService hashService, RoleRepository roleRepository) {
+        this.securityContextService = securityContextService;
         this.authenticationPresenter = authenticationPresenter;
         this.accountRepository = accountRepository;
+        this.registrationRoleHelper = registrationRoleHelper;
+        this.hashService = hashService;
         this.roleRepository = roleRepository;
     }
 
     @Override
     public RegistrationServiceResponseModel registration(RegistrationDBO dto, BindingResult bindingResult) {
         try {
-            if (!isAnonymousUser()) {throw new AuthenticationForbiddenException("Вы уже авторизованы");}
+            if (!securityContextService.isAnonymousUser()) {throw new AuthenticationForbiddenException("Вы уже авторизованы");}
 
             if (accountRepository.existsByEmail(dto.getEmail())) {throw new AuthenticationConflictException("Email занят");}
 
             if (bindingResult.hasErrors()) {throw new AuthenticationBadRequestException("Неверно введенны данные");}
 
-            checkRoleInData(dto);
+            registrationRoleHelper.checkRoleInData(dto);
 
         } catch (AuthenticationBadRequestException authenticationBadRequestException) {
             throw authenticationPresenter.prepareBadRequestView(authenticationBadRequestException.getMessage());
@@ -51,68 +56,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw authenticationPresenter.prepareConflictView(authenticationConflictException.getMessage());
         }
 
-        hashPassword(dto);
+        RegistrationDBO dboWithHashedPassword = hashService.hashPassword(dto);
 
-        RoleEntity roleEntity = roleRepository.findByRole(dto.getRole());
+        RoleEntity roleEntity = roleRepository.findByRole(dboWithHashedPassword.getRole());
 
         AccountEntity newAccount = new AccountEntity(
-                dto.getEmail(),
-                dto.getPassword(),
-                dto.getFirstName(),
-                dto.getLastName(),
+                dboWithHashedPassword.getEmail(),
+                dboWithHashedPassword.getPassword(),
+                dboWithHashedPassword.getFirstName(),
+                dboWithHashedPassword.getLastName(),
                 roleEntity.getRoleId()
         );
         newAccount.setRoleEntity(roleEntity);
 
         accountRepository.save(newAccount);
 
-        RegistrationServiceResponseModel formatedResponse = formatResponse(newAccount);
+        RegistrationServiceResponseModel formatedResponse = registrationRoleHelper.formatResponse(newAccount);
 
         return authenticationPresenter.prepareSuccessView(formatedResponse);
-    }
-
-    private boolean isAnonymousUser() {
-        return SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal() == "anonymousUser";
-    }
-
-    private void checkRoleInData(RegistrationDBO dto) {
-        if (dto.getRole().equalsIgnoreCase(RoleUtil.EXECUTOR_Ru)) {dto.setRole(RoleUtil.EXECUTOR_En);}
-
-        else if (dto.getRole().equalsIgnoreCase(RoleUtil.AUTHOR_Ru)) {dto.setRole(RoleUtil.AUTHOR_En);}
-
-        else {throw new AuthenticationBadRequestException("Такой роли нет");}
-    }
-
-    private void hashPassword(RegistrationDBO dto) {
-        String notHashedPassword = dto.getPassword();
-
-        String hashedPassword = encoder.encode(notHashedPassword);
-
-        dto.setPassword(hashedPassword);
-    }
-
-    private RegistrationServiceResponseModel formatResponse(AccountEntity registeredAccount) {
-        String roleToAnswer = "";
-
-        if (registeredAccount
-                .getRoleEntity()
-                .getRole()
-                .equals(RoleUtil.EXECUTOR_En)) {roleToAnswer = "Исполнитель";}
-
-        else if (registeredAccount
-                .getRoleEntity()
-                .getRole()
-                .equals(RoleUtil.AUTHOR_En)) {roleToAnswer = "Автор";}
-
-        return new RegistrationServiceResponseModel(
-                registeredAccount.getAccountId(),
-                registeredAccount.getEmail(),
-                registeredAccount.getFirstname(),
-                registeredAccount.getLastname(),
-                roleToAnswer
-        );
     }
 }
